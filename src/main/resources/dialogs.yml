@@ -1,0 +1,402 @@
+# =====================================================
+#     HavocAuction - dialogs.yml  (1.21.6+ Dialog API)
+# =====================================================
+# Every screen has a TITLE, BODY lines, and BUTTONS with LABEL and TOOLTIP.
+# TOOLTIP is a list; lines are joined with newlines in the hover text.
+# Hex colours (&#f40d0d) and legacy codes (&7) both work.
+# COLUMNS on a dialog overrides DIALOG.COLUMNS in config.yml.
+
+# Optional rows reused across screens. They disappear when they do not apply, so a
+# listing with no durability simply has no durability row.
+LINES:
+  DURABILITY: "&7Durability: &f{durability} &8({durability_percent}%)"
+  # Shown when the seller renamed the item, so buyers always see what it really is.
+  RENAMED: "&c! &7Renamed. Actually a &f{type}"
+  # Appended to the button label of a renamed item.
+  RENAMED-TAG: " &8({type})"
+
+NAMES:
+  SORT:
+    RECENTLY-LISTED: "Recently Listed"
+    OLDEST-LISTED: "Oldest Listed"
+    LOWEST-PRICE: "Lowest Price"
+    HIGHEST-PRICE: "Highest Price"
+    BEST-UNIT-PRICE: "Best Price Per Item"
+    ENDING-SOON: "Ending Soon"
+  FILTER:
+    ALL: "All"
+    BLOCKS: "Blocks"
+    TOOLS: "Tools"
+    FOOD: "Food"
+    COMBAT: "Combat"
+    POTIONS: "Potions"
+    BOOKS: "Books"
+    INGREDIENTS: "Ingredients"
+    UTILITIES: "Utilities"
+
+DIALOGS:
+
+  # ======================| BOARD |======================
+
+  AUCTION:
+    TITLE: "&#f40d0dᴀᴜᴄᴛɪᴏɴ"
+    COLUMNS: 3
+    BODY:
+      - "&7Page &f{page}&7/&f{pages} &8| &7{results} listings"
+      - "&7Balance: &#f40d0d${balance}"
+      - "&8Sort: &7{sort}   &8Filter: &7{filter}   &8Search: &7{query}"
+    EMPTY: "&7Nothing matches those filters."
+    BUTTONS:
+      LISTING:
+        LABEL: "&f{amount}x {item}{renamed_tag} &8- &#f40d0d${price}"
+        TOOLTIP:
+          - "&#f40d0d{amount}x {item}"
+          - "{renamed_line}"
+          - "&7Type: &f{type}"
+          - "&7Seller: &f{seller}"
+          - "{durability_line}"
+          - ""
+          - "&7Price: &#f40d0d${price}"
+          - "&7Each: &#f40d0d${unit_price}"
+          - ""
+          - "&fClick to buy"
+          - "&8Ends in {expires}"
+      OWN-LISTING:
+        LABEL: "&f{amount}x {item}{renamed_tag} &8- &7ʏᴏᴜʀѕ"
+        TOOLTIP:
+          - "&#f40d0dYour listing"
+          - "&f{amount}x {item}"
+          - "{renamed_line}"
+          - "{durability_line}"
+          - "&7Price: &#f40d0d${price}"
+          - ""
+          - "&fClick to manage it"
+          - "&8Ends in {expires}"
+      PREVIOUS:
+        LABEL: "&#f40d0d< ᴘʀᴇᴠɪᴏᴜѕ"
+        TOOLTIP: [ "&7Page {previous} of {pages}" ]
+      NEXT:
+        LABEL: "&#f40d0dɴᴇxᴛ >"
+        TOOLTIP: [ "&7Page {next} of {pages}" ]
+      SORT:
+        LABEL: "&#f40d0dѕᴏʀᴛ: &f{sort}"
+        TOOLTIP: [ "&7Click to cycle sorting" ]
+      FILTER:
+        LABEL: "&#f40d0dꜰɪʟᴛᴇʀ: &f{filter}"
+        TOOLTIP: [ "&7Click to cycle categories" ]
+      SEARCH:
+        LABEL: "&#f40d0dѕᴇᴀʀᴄʜ"
+        TOOLTIP:
+          - "&7Type privately - nobody sees this"
+          - "&7Currently: &f{query}"
+      MY-LISTINGS:
+        LABEL: "&#f40d0dʏᴏᴜʀ ɪᴛᴇᴍѕ"
+        TOOLTIP: [ "&7Sell, manage, collect and view history" ]
+      CLOSE:
+        LABEL: "&7ᴄʟᴏѕᴇ"
+        TOOLTIP: [ ]
+
+  SEARCH:
+    TITLE: "&#f40d0dѕᴇᴀʀᴄʜ"
+    BODY:
+      - "&7This box is private. Nothing is sent to chat."
+    INPUT-LABEL: "&fSearch"
+    BUTTONS:
+      CONFIRM:
+        LABEL: "&#f40d0dѕᴇᴀʀᴄʜ"
+        TOOLTIP: [ ]
+      CLEAR:
+        LABEL: "&7ᴄʟᴇᴀʀ"
+        TOOLTIP: [ "&7Remove the current search" ]
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  # ======================| BUYING |======================
+
+  CONFIRM-PURCHASE:
+    TITLE: "&#f40d0dʙᴜʏ &8-> &f{item}"
+    COLUMNS: 2
+    BODY:
+      - "&f{amount}x {item}"
+      - "{renamed_line}"
+      - "&7Type: &f{type}"
+      - "&7Sold by &f{seller}"
+      - "{durability_line}"
+      - ""
+      - "&7Price: &#f40d0d${price}"
+      - "&7Per item: &#f40d0d${unit_price}"
+      - ""
+      - "&7Balance now: &#f40d0d${balance}"
+      - "&7Balance after: &#f40d0d${after}"
+      - ""
+      - "&8Ends in {expires}"
+    BUTTONS:
+      CONFIRM:
+        LABEL: "&#f40d0dʙᴜʏ ꜰᴏʀ ${price}"
+        TOOLTIP: [ "&7Buy this listing" ]
+      PREVIEW:
+        LABEL: "&#f40d0dᴘʀᴇᴠɪᴇᴡ"
+        TOOLTIP:
+          - "&7Shulker contents, map art,"
+          - "&7enchantments and durability"
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  CONTAINER-PREVIEW:
+    TITLE: "&#f40d0dᴘʀᴇᴠɪᴇᴡ &8-> &f{item}"
+    COLUMNS: 2
+    BODY:
+      - "&f{amount}x {item}"
+      - "{renamed_line}"
+      - "{durability_line}"
+    LINE: "&7- &f{amount}x {item}"
+    ENCHANT-LINE: "&7- &f{enchantment} {level}"
+    MORE: "&8...and {count} more stacks"
+    BOOK-HEADER: "&#f40d0dSigned book"
+    BOOK-HEADER-UNSIGNED: "&#f40d0dBook and quill"
+    BOOK-LINES:
+      - "&7Title: &f{title}"
+      - "&7Signed by: &#f40d0d{author}"
+      - "&7Generation: &f{generation} &8| &7Pages: &f{pages}"
+    BOOK-LINES-UNSIGNED:
+      - "&7Pages: &f{pages}"
+      - "&8Not signed, so it can still be edited."
+    BOOK-PAGE: "&8\"{page}\""
+    MAP-HEADER: "&#f40d0dMap art"
+    MAP-HINT: "&7Click below to hold it and see the art."
+    MAP-LINES:
+      - "&7Map &8#&f{id} &8| &7Scale: &f{scale}"
+      - "&7World: &f{world} &8| &7Locked: &f{locked}"
+    EMPTY: "&7Nothing else to show for this item."
+    BUTTONS:
+      VIEW-MAP:
+        LABEL: "&#f40d0dᴠɪᴇᴡ ᴍᴀᴘ ᴀʀᴛ"
+        TOOLTIP:
+          - "&7Puts the map in your off hand"
+          - "&7for a few seconds so you can see it"
+          - "&8It cannot be dropped or kept."
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  # ======================| YOUR ITEMS |======================
+
+  MY-LISTINGS:
+    TITLE: "&#f40d0dʏᴏᴜʀ ɪᴛᴇᴍѕ"
+    COLUMNS: 3
+    BODY:
+      - "&7{count} live listings worth &#f40d0d${value}"
+      - "&7{collectable} waiting to collect &8({collectable_items} items)"
+    EMPTY: "&7You have nothing listed. Hold an item and hit Sell."
+    BUTTONS:
+      LISTING:
+        LABEL: "&f{amount}x {item}{renamed_tag} &8- &#f40d0d${price}"
+        TOOLTIP:
+          - "&f{amount}x {item}"
+          - "{renamed_line}"
+          - "{durability_line}"
+          - "&7Price: &#f40d0d${price}"
+          - "&7Each: &#f40d0d${unit_price}"
+          - ""
+          - "&fClick to manage"
+          - "&8Ends in {expires}"
+      PREVIOUS:
+        LABEL: "&#f40d0d< ᴘʀᴇᴠɪᴏᴜѕ"
+        TOOLTIP: [ ]
+      NEXT:
+        LABEL: "&#f40d0dɴᴇxᴛ >"
+        TOOLTIP: [ ]
+      SELL:
+        LABEL: "&#f40d0d+ ѕᴇʟʟ ʜᴇʟᴅ ɪᴛᴇᴍ"
+        TOOLTIP:
+          - "&7Lists whatever is in your hand"
+          - "&8Or use /ah sell <price>"
+      COLLECT:
+        LABEL: "&#f40d0dᴄᴏʟʟᴇᴄᴛ &7({collectable})"
+        TOOLTIP: [ "&7Items from cancelled or expired listings" ]
+      TRANSACTIONS:
+        LABEL: "&#f40d0dʜɪѕᴛᴏʀʏ"
+        TOOLTIP: [ "&7Your sales and purchases" ]
+      ALERTS:
+        LABEL: "&#f40d0dᴀʟᴇʀᴛѕ: &f{alerts}"
+        TOOLTIP: [ "&7Tell you in chat when your items sell" ]
+      FAST-BUY:
+        LABEL: "&#f40d0dꜰᴀѕᴛ ᴍᴏᴅᴇ: &f{fast_buy}"
+        TOOLTIP:
+          - "&7Skip confirmation screens when"
+          - "&7buying and listing"
+          - "&cNo second chances when this is on."
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  MANAGE-LISTING:
+    TITLE: "&#f40d0dʏᴏᴜʀ ʟɪѕᴛɪɴɢ"
+    COLUMNS: 2
+    BODY:
+      - "&f{amount}x {item}"
+      - "{renamed_line}"
+      - "{durability_line}"
+      - "&7Price: &#f40d0d${price}"
+      - "&7Per item: &#f40d0d${unit_price}"
+      - ""
+      - "&8Ends in {expires}"
+    BUTTONS:
+      CANCEL-LISTING:
+        LABEL: "&#f40d0dᴘᴜʟʟ ꜰʀᴏᴍ ᴀᴜᴄᴛɪᴏɴ"
+        TOOLTIP:
+          - "&7Take it off the board"
+          - "&7The item waits in your collect screen"
+      PREVIEW:
+        LABEL: "&#f40d0dᴘʀᴇᴠɪᴇᴡ"
+        TOOLTIP: [ "&7See exactly what this is" ]
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  # ======================| SELLING |======================
+
+  SELL:
+    TITLE: "&#f40d0dѕᴇʟʟ"
+    COLUMNS: 2
+    BODY:
+      - "&fSelling: &#f40d0d{amount}x {item}"
+      - ""
+      - "&7Asking price: &#f40d0d${price}"
+      - "&7Per item: &#f40d0d${unit_price}"
+      - "&7Listing fee: &#f40d0d${fee}"
+      - "&7You receive: &#f40d0d${payout} &8(after ${tax} tax)"
+      - ""
+      - "&8Price accepts 1k, 2.5k, 1m and so on."
+    BODY-EMPTY:
+      - "&cYou are not holding anything."
+      - "&7Hold the item you want to sell, then reopen this."
+    PRICE-LABEL: "&fPrice for the whole stack"
+    BUTTONS:
+      CONFIRM:
+        LABEL: "&#f40d0dʟɪѕᴛ ɪᴛ"
+        TOOLTIP: [ "&7List the held item at that price" ]
+      PRICE-PER-ITEM:
+        LABEL: "&#f40d0dᴛʀᴇᴀᴛ ᴀѕ ᴘᴇʀ-ɪᴛᴇᴍ"
+        TOOLTIP:
+          - "&7Multiply what you typed by the"
+          - "&7stack size &8({amount})"
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  CONFIRM-LISTING:
+    TITLE: "&#f40d0dᴄᴏɴꜰɪʀᴍ ʟɪѕᴛɪɴɢ"
+    COLUMNS: 2
+    BODY:
+      - "&fList &#f40d0d{amount}x {item} &ffor &#f40d0d${price}&f?"
+      - ""
+      - "&7Listing fee: &#f40d0d${fee}"
+      - "&7You receive on sale: &#f40d0d${payout}"
+    BUTTONS:
+      CONFIRM:
+        LABEL: "&#f40d0dᴄᴏɴꜰɪʀᴍ"
+        TOOLTIP: [ ]
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  # ======================| COLLECT |======================
+
+  COLLECT:
+    TITLE: "&#f40d0dᴄᴏʟʟᴇᴄᴛ"
+    COLUMNS: 3
+    BODY:
+      - "&7Page &f{page}&7/&f{pages} &8| &7{count} listings, {total_items} items"
+      - ""
+      - "&8Drop buttons drop at your feet, spread over a few ticks."
+    EMPTY: "&7Nothing waiting for you."
+    BUTTONS:
+      LOOT:
+        LABEL: "&f{amount}x {item}{renamed_tag}"
+        TOOLTIP:
+          - "&f{amount}x {item}"
+          - "{renamed_line}"
+          - "{durability_line}"
+          - "&7Was listed for &#f40d0d${price}"
+          - "&8{status}"
+          - ""
+          - "&fClick to collect"
+      PREVIOUS:
+        LABEL: "&#f40d0d< ᴘʀᴇᴠɪᴏᴜѕ"
+        TOOLTIP: [ ]
+      NEXT:
+        LABEL: "&#f40d0dɴᴇxᴛ >"
+        TOOLTIP: [ ]
+      COLLECT-ALL:
+        LABEL: "&#f40d0dᴄᴏʟʟᴇᴄᴛ ᴀʟʟ"
+        TOOLTIP: [ "&7Takes everything that fits" ]
+      DROP-PAGE:
+        LABEL: "&#f40d0dᴅʀᴏᴘ ᴘᴀɢᴇ"
+        TOOLTIP: [ "&7Drops the {per_page} entries on this page" ]
+      DROP-PAGES:
+        LABEL: "&#f40d0dᴅʀᴏᴘ {pages_batch} ᴘᴀɢᴇѕ"
+        TOOLTIP: [ "&7Drops the next {pages_batch} pages" ]
+      DROP-ALL:
+        LABEL: "&#f40d0dᴅʀᴏᴘ ᴀʟʟ &7({total_items})"
+        TOOLTIP:
+          - "&7Drops everything at your feet"
+          - "&cMake sure you have room."
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  DROP-CONFIRM:
+    TITLE: "&#f40d0dᴅʀᴏᴘ ᴇᴠᴇʀʏᴛʜɪɴɢ?"
+    COLUMNS: 2
+    BODY:
+      - "&fDrop &#f40d0d{amount} &fitems on the ground?"
+      - "&cThey are not protected. Anyone nearby can pick them up."
+    BUTTONS:
+      CONFIRM:
+        LABEL: "&#f40d0dᴅʀᴏᴘ"
+        TOOLTIP: [ ]
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
+
+  # ======================| HISTORY |======================
+
+  TRANSACTIONS:
+    TITLE: "&#f40d0dʜɪѕᴛᴏʀʏ"
+    COLUMNS: 3
+    BODY:
+      - "&7Page &f{page}&7/&f{pages} &8| &7{results} entries"
+      - ""
+      - "&7Earned: &#f40d0d${total_made} &8({sales} sales)"
+      - "&7Spent: &#f40d0d${total_spent} &8({purchases} purchases)"
+      - "&7Net: &#f40d0d${net}"
+      - "&7Search: &f{query}"
+    EMPTY: "&7Nothing here yet."
+    BUTTONS:
+      SALE:
+        LABEL: "&a+ &f{amount}x {item} &8- &#f40d0d${price}"
+        TOOLTIP:
+          - "&f{buyer} &7bought your &f{amount}x {item}"
+          - "&7for &#f40d0d${price}"
+          - "&8{time} ago"
+      PURCHASE:
+        LABEL: "&c- &f{amount}x {item} &8- &#f40d0d${price}"
+        TOOLTIP:
+          - "&7You bought &f{amount}x {item}"
+          - "&7from &f{seller} &7for &#f40d0d${price}"
+          - "&8{time} ago"
+      PREVIOUS:
+        LABEL: "&#f40d0d< ᴘʀᴇᴠɪᴏᴜѕ"
+        TOOLTIP: [ ]
+      NEXT:
+        LABEL: "&#f40d0dɴᴇxᴛ >"
+        TOOLTIP: [ ]
+      SEARCH:
+        LABEL: "&#f40d0dѕᴇᴀʀᴄʜ"
+        TOOLTIP: [ "&7Filter by player or item, privately" ]
+      BACK:
+        LABEL: "&7ʙᴀᴄᴋ"
+        TOOLTIP: [ ]
