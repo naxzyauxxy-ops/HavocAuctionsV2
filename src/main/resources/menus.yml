@@ -1,0 +1,618 @@
+# =====================================================
+#              HavocOrders - menus.yml
+# =====================================================
+# Chest menus. Every layout is here: SIZE, which slots hold content, and a fixed slot
+# for each named control, so paging never moves the buttons around.
+#
+# SLOTS are 0-based, left to right, top to bottom. A 54-slot menu is 6 rows of 9.
+# CONTENT-SLOTS defaults to an inset rectangle, leaving a one-slot border.
+# Anything left empty is filled with the FILLER item below.
+# Dialogs replace chest GUIs, so there are no MATERIAL or SLOT keys any more.
+# Each screen has a TITLE, some BODY lines, and BUTTONS with a LABEL and TOOLTIP.
+# TOOLTIP is a list; the lines are joined with newlines in the hover text.
+# Hex colours (&#f40d0d) and legacy codes (&7) both work.
+
+# Display names for the sort and filter cycles.
+NAMES:
+  SORT:
+    MOST-PAID: "Most Paid"
+    MOST-DELIVERED: "Most Delivered"
+    RECENTLY-LISTED: "Recently Listed"
+    MOST-MONEY-PER-ITEM: "Most Money Per Item"
+  FILTER:
+    ALL: "All"
+    BLOCKS: "Blocks"
+    TOOLS: "Tools"
+    FOOD: "Food"
+    COMBAT: "Combat"
+    POTIONS: "Potions"
+    BOOKS: "Books"
+    INGREDIENTS: "Ingredients"
+    UTILITIES: "Utilities"
+
+
+# The border item that fills every empty slot.
+FILLER:
+  MATERIAL: "GRAY_STAINED_GLASS_PANE"
+  NAME: " "
+
+MENUS:
+
+  # ======================| ORDER BOARD |======================
+
+  ORDERS:
+    TITLE: "&8ᴏʀᴅᴇʀѕ"
+    SIZE: 54
+    INFO-SLOT: 4
+    INFO-MATERIAL: "PAPER"
+    # 21 slots, matching SETTINGS.ORDERS-PER-PAGE
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      SORT: 47
+      FILTER: 48
+      SEARCH: 49
+      MY-ORDERS: 50
+      CLOSE: 52
+      NEXT: 53
+    BODY:
+      - "&7{results} orders"
+      - "&8Page {page} of {pages}"
+      - ""
+      - "&7Sort: &f{sort}"
+      - "&7Filter: &f{filter}"
+      - "&7Search: &f{query}"
+    EMPTY: "&7Nothing matches those filters."
+    BUTTONS:
+      ORDER:
+        LABEL: "&#f40d0d{amount_left}x {material}"
+        TOOLTIP:
+          - "&8{player}'s order"
+          - ""
+          - "&7Pays &a${unit_price} &7each"
+          - "&7Progress: &f{current}&8/&f{max}"
+          - "&7Paid out: &a${paid}"
+          - "&7You are carrying: &f{held}"
+          - ""
+          - "&fClick to deliver"
+          - "&8Expires in {expires}"
+      OWN-ORDER:
+        LABEL: "&e{amount_left}x {material}"
+        TOOLTIP:
+          - "&8Your order"
+          - ""
+          - "&7Progress: &f{current}&8/&f{max}"
+          - "&7Paid out: &a${paid}"
+          - "&7Waiting to collect: &f{collectable}"
+          - ""
+          - "&fClick to manage"
+          - "&8Expires in {expires}"
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ "&7Page {previous} of {pages}" ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ "&7Page {next} of {pages}" ]
+      SORT:
+        MATERIAL: "COMPARATOR"
+        LABEL: "&#f40d0dSort"
+        TOOLTIP:
+          - "&7Currently: &f{sort}"
+          - ""
+          - "&fClick to cycle"
+      FILTER:
+        MATERIAL: "HOPPER"
+        LABEL: "&#f40d0dFilter"
+        TOOLTIP:
+          - "&7Currently: &f{filter}"
+          - ""
+          - "&fClick to cycle"
+      SEARCH:
+        MATERIAL: "OAK_SIGN"
+        LABEL: "&#f40d0dSearch"
+        TOOLTIP:
+          - "&7Currently: &f{query}"
+          - ""
+          - "&fClick to search"
+          - "&8Or use /orders <text>"
+      MY-ORDERS:
+        MATERIAL: "CHEST"
+        LABEL: "&#f40d0dYour Orders"
+        TOOLTIP: [ "&7Manage your orders and loot" ]
+      CLOSE:
+        MATERIAL: "BARRIER"
+        LABEL: "&cClose"
+        TOOLTIP: [ ]
+
+  # ======================| SEARCH |======================
+
+  SEARCH:
+    TITLE: "&8ѕᴇᴀʀᴄʜ"
+    SIZE: 27
+    INFO-SLOT: 4
+    INFO-MATERIAL: "OAK_SIGN"
+    SLOTS:
+      CONFIRM: 11
+      CLEAR: 13
+      BACK: 15
+    BODY:
+      - "&7Type what you are looking for."
+    INPUT-LABEL: "search"
+    BUTTONS:
+      CONFIRM:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aSearch"
+        TOOLTIP: [ ]
+      CLEAR:
+        MATERIAL: "RED_DYE"
+        LABEL: "&cClear"
+        TOOLTIP: [ "&7Remove the current search" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  # ======================| DELIVER |======================
+
+  DELIVER:
+    TITLE: "&8ᴅᴇʟɪᴠᴇʀ"
+    SIZE: 45
+    INFO-SLOT: 13
+    QUICK-AMOUNTS: [ 64, 576, 1728 ]
+    SLOTS:
+      DELIVER: 29
+      DELIVER-ALL: 31
+      INPUT: 33
+      BACK: 40
+    BODY:
+      - "&8{player}'s order"
+      - ""
+      - "&7Pays &a${unit_price} &7each"
+      - "&7Progress: &f{current}&8/&f{max}"
+      - "&7Still wanted: &f{remaining}"
+      - ""
+      - "&7In your inventory: &f{held_inventory}"
+      - "&7In your shulkers: &f{held_shulkers}"
+      - "&7You can deliver: &a{deliverable}"
+      - "&7That pays: &a${payout}"
+      - ""
+      - "&8Expires in {expires}"
+    INPUT-LABEL: "amount"
+    BUTTONS:
+      DELIVER:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aDeliver"
+        TOOLTIP:
+          - "&7Delivers the amount you set"
+          - "&7Unset delivers &f{deliverable}"
+      DELIVER-ALL:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aDeliver All &7({deliverable})"
+        TOOLTIP:
+          - "&7Everything you are carrying,"
+          - "&7including inside shulkers"
+          - "&7Pays &a${payout}"
+      QUICK:
+        MATERIAL: "HOPPER"
+        LABEL: "&#f40d0dDeliver {amount}"
+        TOOLTIP: [ "&7Pays &a${value}" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back to Orders"
+        TOOLTIP: [ ]
+
+  # ======================| YOUR ORDERS |======================
+
+  MY-ORDERS:
+    TITLE: "&8ʏᴏᴜʀ ᴏʀᴅᴇʀѕ"
+    SIZE: 54
+    INFO-SLOT: 4
+    INFO-MATERIAL: "CHEST"
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      NEW-ORDER: 47
+      COLLECT: 49
+      ALERTS: 51
+      BACK: 48
+      NEXT: 53
+    BODY:
+      - "&7{count} active orders"
+      - "&7Escrow held: &a${escrow}"
+      - "&7Waiting to collect: &f{collectable}"
+      - "&8Page {page} of {pages}"
+    EMPTY: "&7You have no orders yet."
+    BUTTONS:
+      ORDER:
+        LABEL: "&#f40d0d{amount_left}x {material}"
+        TOOLTIP:
+          - "&7Pays &a${unit_price} &7each"
+          - "&7Progress: &f{current}&8/&f{max}"
+          - "&7Paid out: &a${paid}"
+          - "&7Waiting to collect: &f{collectable}"
+          - ""
+          - "&fClick to manage"
+          - "&8Expires in {expires}"
+      NEW-ORDER:
+        MATERIAL: "WRITABLE_BOOK"
+        LABEL: "&aNew Order"
+        TOOLTIP: [ "&7Create a buy order" ]
+      COLLECT:
+        MATERIAL: "ENDER_CHEST"
+        LABEL: "&#f40d0dCollect Loot &7({collectable})"
+        TOOLTIP: [ "&7Collect, drop or sell deliveries" ]
+      ALERTS:
+        MATERIAL: "BELL"
+        LABEL: "&#f40d0dAlerts: &f{alerts}"
+        TOOLTIP: [ "&7Chat message when someone delivers" ]
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  MANAGE-ORDER:
+    TITLE: "&8ᴍᴀɴᴀɢᴇ ᴏʀᴅᴇʀ"
+    SIZE: 45
+    INFO-SLOT: 13
+    SLOTS:
+      COLLECT: 29
+      CANCEL-ORDER: 33
+      BACK: 40
+    BODY:
+      - "&7Pays &a${unit_price} &7each"
+      - "&7Progress: &f{current}&8/&f{max}"
+      - "&7Paid out: &a${paid} &8of ${max_paid}"
+      - "&7Waiting to collect: &f{collectable}"
+      - "&7Refund if cancelled: &a${refund}"
+      - ""
+      - "&8Expires in {expires}"
+    BUTTONS:
+      COLLECT:
+        MATERIAL: "ENDER_CHEST"
+        LABEL: "&#f40d0dCollect"
+        TOOLTIP: [ "&7Open your loot" ]
+      CANCEL-ORDER:
+        MATERIAL: "RED_CONCRETE"
+        LABEL: "&cCancel Order"
+        TOOLTIP: [ "&7Refunds &a${refund}" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  CANCEL-CONFIRM:
+    TITLE: "&8ᴄᴀɴᴄᴇʟ ᴏʀᴅᴇʀ?"
+    SIZE: 27
+    INFO-SLOT: 4
+    INFO-MATERIAL: "RED_CONCRETE"
+    SLOTS:
+      CONFIRM: 11
+      BACK: 15
+    BODY:
+      - "&fCancel your order for"
+      - "&#f40d0d{max} {material}&f?"
+      - ""
+      - "&7You get &a${refund} &7back."
+    BUTTONS:
+      CONFIRM:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aConfirm"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Nevermind"
+        TOOLTIP: [ ]
+
+  # ======================| NEW ORDER |======================
+
+  NEW-ORDER:
+    TITLE: "&8ɴᴇᴡ ᴏʀᴅᴇʀ"
+    SIZE: 45
+    INFO-SLOT: 4
+    INFO-MATERIAL: "WRITABLE_BOOK"
+    SLOTS:
+      CHOOSE-ITEM: 20
+      HELD-ITEM: 21
+      ENCHANTS: 23
+      INPUT: 24
+      CONFIRM: 40
+      BACK: 36
+    BODY:
+      - "&7Item: &f{material}"
+      - "&7Amount: &f{amount}"
+      - "&7Price each: &a${price}"
+      - "&7Enchantments: {enchants}"
+      - ""
+      - "&7Total cost: &a${total}"
+      - "&7Your balance: &a${balance}"
+      - ""
+      - "&8Amounts accept 1k, 2.5k, 1m"
+    AMOUNT-LABEL: "amount"
+    PRICE-LABEL: "price each"
+    BUTTONS:
+      CHOOSE-ITEM:
+        MATERIAL: "ITEM_FRAME"
+        LABEL: "&#f40d0dChoose Item"
+        TOOLTIP: [ "&7Currently: &f{material}" ]
+      HELD-ITEM:
+        MATERIAL: "DROPPER"
+        LABEL: "&#f40d0dUse Held Item"
+        TOOLTIP: [ "&7Order whatever is in your hand" ]
+      ENCHANTS:
+        MATERIAL: "ENCHANTING_TABLE"
+        LABEL: "&#f40d0dEnchantments"
+        TOOLTIP:
+          - "&7Currently: {enchants}"
+          - ""
+          - "&fClick to choose"
+      CONFIRM:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aPlace Order"
+        TOOLTIP: [ "&7Costs &a${total}" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  ITEM-PICKER:
+    TITLE: "&8ᴄʜᴏᴏѕᴇ ɪᴛᴇᴍ"
+    SIZE: 54
+    INFO-SLOT: 4
+    ITEMS-PER-PAGE: 21
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      FILTER: 48
+      SEARCH: 49
+      BACK: 50
+      NEXT: 53
+    BODY:
+      - "&7{results} items"
+      - "&8Page {page} of {pages}"
+      - ""
+      - "&7Filter: &f{filter}"
+      - "&7Search: &f{query}"
+    EMPTY: "&7No items match that search."
+    BUTTONS:
+      ITEM:
+        LABEL: "&f{name}"
+        TOOLTIP: [ "&fClick to select" ]
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ ]
+      FILTER:
+        MATERIAL: "HOPPER"
+        LABEL: "&#f40d0dFilter: &f{filter}"
+        TOOLTIP: [ "&fClick to cycle" ]
+      SEARCH:
+        MATERIAL: "OAK_SIGN"
+        LABEL: "&#f40d0dSearch"
+        TOOLTIP: [ "&7Currently: &f{query}" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  ENCHANT-PICKER:
+    TITLE: "&8ᴇɴᴄʜᴀɴᴛᴇᴅ ʙᴏᴏᴋѕ"
+    SIZE: 54
+    INFO-SLOT: 4
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      BACK: 49
+      NEXT: 53
+    BODY:
+      - "&8Page {page} of {pages}"
+    BUTTONS:
+      ENCHANT:
+        MATERIAL: "ENCHANTED_BOOK"
+        LABEL: "&#f40d0d{enchantment} {level}"
+        TOOLTIP: [ "&fClick to select" ]
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  ENCHANT-EDIT:
+    TITLE: "&8ᴇɴᴄʜᴀɴᴛᴍᴇɴᴛѕ"
+    SIZE: 54
+    INFO-SLOT: 4
+    ITEMS-PER-PAGE: 21
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      CLEAR: 48
+      BACK: 50
+      NEXT: 53
+    BODY:
+      - "&7Item: &f{material}"
+      - "&7Chosen: {applied}"
+      - "&8Page {page} of {pages}"
+    BUTTONS:
+      ENCHANT:
+        MATERIAL: "BOOK"
+        LABEL: "&7{enchantment}"
+        TOOLTIP: [ "&fClick to choose a level" ]
+      ENCHANT-ACTIVE:
+        MATERIAL: "ENCHANTED_BOOK"
+        LABEL: "&a{enchantment} {level}"
+        TOOLTIP:
+          - "&aOn this order"
+          - "&fClick to change or remove"
+      CLEAR:
+        MATERIAL: "RED_DYE"
+        LABEL: "&cClear All"
+        TOOLTIP: [ "&7Remove every enchantment" ]
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  ENCHANT-LEVEL:
+    TITLE: "&8ᴄʜᴏᴏѕᴇ ʟᴇᴠᴇʟ"
+    SIZE: 36
+    INFO-SLOT: 4
+    INFO-MATERIAL: "ENCHANTED_BOOK"
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16 ]
+    SLOTS:
+      REMOVE: 29
+      BACK: 31
+    BODY:
+      - "&7On: &f{material}"
+      - "&7Currently: &f{current}"
+      - "&8Max level {max}"
+    BUTTONS:
+      LEVEL:
+        MATERIAL: "ENCHANTED_BOOK"
+        LABEL: "&a{enchantment} {level}"
+        TOOLTIP: [ "&fClick to use this level" ]
+      REMOVE:
+        MATERIAL: "RED_CONCRETE"
+        LABEL: "&cRemove"
+        TOOLTIP: [ "&7Take this enchantment off" ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  # ======================| COLLECT |======================
+
+  COLLECT:
+    TITLE: "&8ᴄᴏʟʟᴇᴄᴛ"
+    SIZE: 54
+    INFO-SLOT: 4
+    CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+    SLOTS:
+      PREVIOUS: 45
+      COLLECT-ALL: 47
+      SELL-ALL: 48
+      DROP-PAGE: 50
+      DROP-PAGES: 51
+      DROP-ALL: 52
+      BACK: 46
+      NEXT: 53
+    BODY:
+      - "&7{total_items} items waiting"
+      - "&7Sell value: &a${sell_total}"
+      - "&8{unsellable} cannot be sold"
+      - "&8Page {page} of {pages}"
+    EMPTY: "&7Nothing waiting for you."
+    BUTTONS:
+      LOOT:
+        LABEL: "&#f40d0d{amount}x {material}"
+        TOOLTIP:
+          - "&7Sell value: &a${value}"
+          - ""
+          - "&fClick to collect what fits"
+      COLLECT-ALL:
+        MATERIAL: "ENDER_CHEST"
+        LABEL: "&aCollect All"
+        TOOLTIP: [ "&7Takes everything that fits" ]
+      SELL-ALL:
+        MATERIAL: "EMERALD"
+        LABEL: "&aSell All &7(${sell_total})"
+        TOOLTIP: [ "&7Sell every sellable item" ]
+      DROP-PAGE:
+        MATERIAL: "HOPPER"
+        LABEL: "&#f40d0dDrop Page"
+        TOOLTIP: [ "&7Drops the {per_page} entries here" ]
+      DROP-PAGES:
+        MATERIAL: "HOPPER"
+        LABEL: "&#f40d0dDrop {pages_batch} Pages"
+        TOOLTIP: [ "&7Drops the next {pages_batch} pages" ]
+      DROP-ALL:
+        MATERIAL: "DROPPER"
+        LABEL: "&cDrop Everything &7({total_items})"
+        TOOLTIP:
+          - "&7Drops it all at your feet"
+          - "&cAnyone nearby can pick it up."
+      PREVIOUS:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dPrevious Page"
+        TOOLTIP: [ ]
+      NEXT:
+        MATERIAL: "ARROW"
+        LABEL: "&#f40d0dNext Page"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  SELL-CONFIRM:
+    TITLE: "&8ѕᴇʟʟ ᴇᴠᴇʀʏᴛʜɪɴɢ?"
+    SIZE: 27
+    INFO-SLOT: 4
+    INFO-MATERIAL: "EMERALD"
+    SLOTS:
+      CONFIRM: 11
+      BACK: 15
+    BODY:
+      - "&fSell &#f40d0d{amount} &fitems"
+      - "&ffor &a${total}&f?"
+      - ""
+      - "&8{unsellable} items have no sell price"
+    BUTTONS:
+      CONFIRM:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&aSell"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]
+
+  DROP-CONFIRM:
+    TITLE: "&8ᴅʀᴏᴘ ᴇᴠᴇʀʏᴛʜɪɴɢ?"
+    SIZE: 27
+    INFO-SLOT: 4
+    INFO-MATERIAL: "DROPPER"
+    SLOTS:
+      CONFIRM: 11
+      BACK: 15
+    BODY:
+      - "&fDrop &#f40d0d{amount} &fitems"
+      - "&fon the ground?"
+      - ""
+      - "&cThey are not protected."
+    BUTTONS:
+      CONFIRM:
+        MATERIAL: "LIME_CONCRETE"
+        LABEL: "&cDrop"
+        TOOLTIP: [ ]
+      BACK:
+        MATERIAL: "ARROW"
+        LABEL: "&7Back"
+        TOOLTIP: [ ]

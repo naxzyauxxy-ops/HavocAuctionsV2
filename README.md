@@ -1,276 +1,406 @@
-# HavocAuction
+# HavocOrders
 
-A player auction house for **Paper / Purpur 1.21.7+**, built entirely on Minecraft's native
-**Dialog API**. Same architecture and conventions as HavocOrders — no chest GUIs anywhere.
+Player-driven buy orders for **Paper / Purpur 1.21.7+**, with a chest-menu interface laid out
+entirely from config.
 
-Players list the item in their hand for a price, anyone can buy it instantly, and sellers
-get paid, notified, and keep a full transaction history.
+Players post orders ("I'll pay $12 each for 512 diamonds"), anyone can deliver and get paid
+instantly, and the owner collects, drops, or sells the loot.
+
+## The menus
+
+Everything is a chest menu, laid out from `menus.yml`. Each menu declares its size, which
+slots hold content, and a fixed slot for every named control, so buttons never move as
+players page through:
+
+```yaml
+ORDERS:
+  SIZE: 54
+  INFO-SLOT: 4
+  CONTENT-SLOTS: [ 10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34 ]
+  SLOTS:
+    PREVIOUS: 45
+    SORT: 47
+    FILTER: 48
+    SEARCH: 49
+    CLOSE: 52
+    NEXT: 53
+```
+
+Content sits in an inset rectangle with a one-slot border, controls run along the bottom
+row, and every empty slot is filled with a border pane, so a half-empty page still looks
+deliberate rather than like a broken grid:
+
+```yaml
+FILLER:
+  MATERIAL: "GRAY_STAINED_GLASS_PANE"
+  NAME: " "
+```
+
+Each button has its own `MATERIAL`, `LABEL` and `TOOLTIP`. Entries that represent an item —
+an order, a listing, waiting loot — use the real item as their icon, so the menu shows what
+it is about rather than a wall of identical panes.
+
+The body text of each menu lives on an information item at `INFO-SLOT`, which is also where
+the item being ordered, bought or previewed is shown.
+
+**One thing to keep in step:** the per-page counts in `config.yml` must match the number of
+`CONTENT-SLOTS` on the matching menu. Set 21 slots and 30 per page, and nine entries have
+nowhere to be drawn.
+
+Text entry — search, prices, amounts — is typed in chat, since a chest has nowhere to type.
+Other players cannot see it, but chat-logging plugins can.
 
 ## Requirements
 
-- **Server:** Paper or Purpur **1.21.7+**
-- **Client:** Minecraft **1.21.6+** — dialogs do not render on older clients
-- **Vault** plus an economy provider
+- **Server:** Paper or Purpur **1.21+**
+- **Client:** any — the interface is chest menus, so Java and Bedrock both work
+- **Vault** plus an economy provider (EssentialsX Economy, CMI, ...)
 - JDK 21 to build
 
 ## Screens
 
-| Dialog | What it does |
+| Menu | What it does |
 | --- | --- |
-| Auction | The board: paged, six sort modes, nine category filters, private search |
-| Buy | Confirmation with price, per-item price, and your balance before/after |
-| Container Preview | What's inside a shulker box, *before* you buy it |
-| Your Items | Live listings, total value, and the way into everything else |
-| Manage Listing | Pull a listing off the board |
-| Sell | Lists your held item; price field with a per-item helper |
-| Confirm Listing | Fee and payout before you commit |
-| Collect | Items from cancelled and expired listings |
-| History | Sales and purchases with lifetime earned/spent/net |
+| Orders | The board: paged, sortable, filterable, searchable |
+| Deliver | Progress bar, what you're carrying, payout preview, quick-amount buttons |
+| Your Orders | Your active orders, escrow total, loot counter, delivery-alert toggle |
+| Manage Order | Per-order detail, collect or cancel — also where your own orders on the board lead |
+| New Order | Item + amount + price, all in one dialog |
+| Item Picker | Every orderable item, paged with filter and search |
+| Enchant Picker | Every enchantment and level, for enchanted books |
+| Collect | Your loot: collect, drop, or sell |
+| Confirm dialogs | Cancel order, sell all, drop all |
 
 ## Commands
 
 | Command | Description |
 | --- | --- |
-| `/ah` | Open the auction board |
-| `/ah sell <price>` | List the held item without opening anything |
-| `/ah reload` | Reload config and dialogs |
-| `/ah import [file]` | Import a legacy DonutAuction database |
+| `/orders` | Open the board — everything else is reachable from inside |
+| `/orders reload` | Reload config and dialogs |
 
-Permissions: `havocauction.use` (default true), `havocauction.admin` (default op).
+Sub-commands for your orders, collecting, and selling were removed; those are buttons now.
 
-## Economy
-
-- **No escrow.** The buyer pays at the moment of purchase and the seller is paid then.
-- `LISTING-FEE-PERCENT` / `LISTING-FEE-FLAT` charge the seller up front, win or lose.
-- `TAX-PERCENT` takes a cut of the sale before the seller is paid.
-- `BROADCAST-PRICE-THRESHOLD` announces expensive listings server-wide.
-
-A purchase claims the listing *before* any money or items move, and rolls the claim back if
-the withdrawal fails. Two players clicking the same listing cannot both win it.
+Permissions: `havocorders.use` (default true), `havocorders.admin` (default op).
 
 ## Number shorthand
 
-Prices accept `1k`, `2.5k`, `1m`, `3b`, `$1,250`. Display abbreviates to `1.23m`; turn that
-off with `AUCTION.ABBREVIATE-NUMBERS: false` and input shorthand still works.
+Every amount and price field accepts shorthand, in input and output:
+
+- `1k` = 1,000 · `2.5k` = 2,500 · `1m` = 1,000,000 · `3b`, `1t`, `1q`
+- `$` signs, commas and underscores are ignored, so `$1,250` works
+- Amount fields also accept `all`, `max`, and `half`
+
+Display abbreviates the same way (`1.23m`). Turn that off with
+`SETTINGS.ABBREVIATE-NUMBERS: false` — input shorthand keeps working either way.
+
+## Renamed items and search
+
+Search matches the real item type, not a custom display name, so a renamed item cannot
+surface under a type it is not. Seller names remain searchable.
 
 ## Java and Bedrock
 
-Geyser translates these dialogs into Bedrock forms, so Bedrock players get the real UI
-rather than a fallback. Two things do not survive that translation, and both are handled:
-
-**Text fields can come back empty.** This is a confirmed Geyser bug
-([GeyserMC/Geyser#6377](https://github.com/GeyserMC/Geyser/issues/6377)): `getText` returns
-`""` on Bedrock while working on Java. Every field here now has a safe default instead of a
-dead end:
-
-| Field | Blank input does |
-| --- | --- |
-| Deliver amount | Delivers everything you can |
-| Order amount / price | Keeps the current value |
-| Auction price | Keeps the price already set, else points at `/ah sell <price>` |
-| Search | Keeps the previous search, and tells Bedrock players the command form |
-
-Nothing is reachable only by typing into a dialog. `/orders search <text>`,
-`/ah search <text>` and `/ah sell <price>` all work from Bedrock chat, and the quick-amount
-buttons on the deliver screen cover the common cases with no typing at all.
-
-**Buttons have no hover text on Bedrock**, so tooltips are invisible there — which would
-have hidden things that matter, like the renamed-item warning and durability. For Bedrock
-players the tooltip is folded into the button label instead.
-
-Bedrock's font also lacks the small-caps glyphs the configs use (`ᴏʀᴅᴇʀѕ`), so those are
-rewritten to plain ASCII for those players only.
+Chest menus render natively on both, so there is no dialog translation involved and no
+version floor beyond the plugin's own. The one gap is Bedrock's font, which has no glyphs
+for the small caps the menus use; those are rewritten to plain ASCII for Bedrock players
+only, via Floodgate. Java players are unaffected.
 
 ```yaml
 BEDROCK:
   ASCII-LABELS: true
-  INLINE-TOOLTIPS: true
 ```
 
-Detection goes through Floodgate by reflection — no compile-time dependency, and a server
-without Floodgate simply treats everyone as Java. Java players see no difference either
-way; both adaptations are per-viewer.
+## Dialog size
 
-## Dialog or chest menus
-
-One setting decides how every menu is drawn, for the whole server:
+Multi-action dialogs lay their buttons out in a grid, and the API defaults to **2 columns**,
+which is why the window looked cramped. Size is now configurable:
 
 ```yaml
-UI-MODE: "DIALOG"   # or MODERN
+SETTINGS:
+  DIALOG:
+    COLUMNS: 3        # grid width
+    BUTTON-WIDTH: 200 # pixels per button, 1-1024
+    ITEM-SIZE: 48     # item preview size, 1-256 (vanilla default is 16)
+  ORDERS-PER-PAGE: 21
+  ITEMS-PER-PAGE: 27
+  COLLECT-PER-PAGE: 15
 ```
 
-- **DIALOG** — Minecraft's dialog windows. Private text fields, renders on Bedrock through
-  Geyser. Needs Paper 1.21.7+ and a 1.21.6+ client.
-- **MODERN** — classic chest menus. Works on any client and any server version.
+Roughly, window width is `COLUMNS x BUTTON-WIDTH`. Three 200px columns fills most of a
+normal-scale screen; push `BUTTON-WIDTH` toward 300 or `COLUMNS` to 4 if you run a low GUI
+scale. Any dialog can override the column count on its own with a `COLUMNS:` key in
+`menus.yml` — the deliver screen uses 2 because it is mostly text and inputs.
 
-Both modes render the **same screen definitions**. A screen describes what it wants — a
-title, some lines, some inputs, some buttons — and a renderer turns that into a dialog or a
-chest. That is deliberate: two separate menu systems would mean every future feature built
-twice, and the two drifting apart. Add a button once and it appears in both.
+Dialogs scroll, so the per-page counts are far higher than a chest GUI allowed: 21 orders
+per page in a 3-wide grid is seven rows at a glance.
 
-Layout in chest mode is worked out from the button count rather than a slot map, so there
-is no per-menu slot config to maintain. Content buttons fill from the top, controls sit on
-the bottom row.
+Back and Close now sit in the dialog's dedicated footer slot rather than taking up a grid
+cell, so the grid is all content.
 
-**One real trade-off.** A chest has nowhere to type, so in MODERN mode text entry — search,
-prices, amounts — falls back to a chat prompt. Other players cannot see it, but
-chat-logging plugins can. Dialog mode keeps those as proper private fields. If search
-privacy matters to you, that is the reason to stay on DIALOG.
+## Shulker support
 
-## Search privacy
+Deliveries read and pull from shulker boxes the player is carrying, so nobody has to
+unpack a box first. The deliver screen splits the count:
 
-Search uses the dialog's own text field, so it goes client-to-server with the button click
-and never appears in chat or in chat-logging plugins. Same for the history search and the
-sell price field.
+```
+In your inventory: 128
+In your shulkers:  1,728
+```
 
-## Item previews
-
-Every listing shows the item as a real icon, not just text: on the buy screen, your
-listings, and the preview screen. Size is configurable.
-
-The **Preview** button appears on any listing that has something more to show — a shulker,
-a map, enchantments, or durability. Plain cobblestone does not get a button that would tell
-you nothing. Preview shows:
-
-- **Shulker boxes** — every stack inside, each as its own icon with a label
-- **Filled maps** — map id, scale, world and locked state, plus a **View Map Art** button
-- **Signed books** — title, who signed it, generation (original vs copy of a copy), page
-  count, and a snippet of the first page
-- **Enchanted items** — the full enchantment list, including stored enchants on books
-- **Damaged items** — durability remaining
+Loose stacks are taken first and shulker contents second, so boxes stay packed as long as
+possible. Emptied boxes are kept, never consumed.
 
 ```yaml
-DIALOG:
-  PREVIEW-ITEM-SIZE: 96
-  PREVIEW-CONTENT-SIZE: 40
-  PREVIEW-MAX-CONTENTS: 27
-  PREVIEW-BOOK-CHARS: 160
+SETTINGS:
+  SHULKERS:
+    DELIVER-FROM-SHULKERS: true
+    CACHE-MILLIS: 1000
 ```
 
-### Map art
+**Why the cache exists:** reading a shulker's contents deserialises its block state, which
+is not cheap, and the order board asks "how many do you have" once per visible order. With
+21 orders on screen and a few boxes in your inventory, an uncached implementation would
+unpack every box twenty-odd times per redraw. One scan now counts everything you carry and
+that snapshot is reused for a second. Anything that moves items invalidates it, and
+deliveries always re-scan before touching your inventory, so the cache can only ever make a
+displayed number a second stale — never the amount that actually moves.
 
-A vanilla client only draws map art for a map it is actually holding. It cannot be drawn
-in a dialog or an item tooltip — the client-side mods that add map tooltips exist precisely
-because the game does not do it, and a server plugin cannot make the client render
-something it has no code for.
+Note that a *filled* shulker is only matched by an identically filled one, because item
+matching compares full item data. Ordering "a shulker box" means an empty one.
 
-So **View Map Art** lends you the map: it goes into your off hand for ten seconds and is
-then taken back. That works on any client, Java or Bedrock, with no mods.
+## The deliver screen
 
-The loaned map is fenced in, because a borrowed item is a duplication risk:
+The busiest screen, so it gets the most detail:
 
-- tagged in its item data, so it can always be identified
-- cannot be dropped, moved, swapped or clicked
-- removed from your drops if you die holding it
-- returned on logout, and purged on login in case the server stopped mid-preview
-- your original off-hand item is restored, or given back to your inventory if the slot got
-  taken in the meantime
+- A progress bar and percentage for the order
+- How much is still wanted, and how much the order has paid out so far
+- How many matching items you are carrying, how many you can deliver right now, and
+  exactly what that pays
+- What filling the whole order would pay
+- A free-text amount field accepting `1k`, `2.5k`, `half`, `all`
+- **Quick-amount buttons** from `QUICK-AMOUNTS` in `menus.yml` (default 64 / 576 / 1728 —
+  a stack, nine stacks, a shulker). They only appear when you can actually deliver that
+  many, so the screen never shows a button that would fail.
+
+Set your own amounts per server:
 
 ```yaml
-DIALOG:
-  MAP-PREVIEW-SECONDS: 10
+DELIVER:
+  COLUMNS: 3
+  QUICK-AMOUNTS: [ 64, 576, 1728 ]
 ```
 
-If your players are on Fabric or Forge, the [Map Tooltip](https://modrinth.com/mod/map-tooltip)
-client mod shows map art on hover with no borrowing at all. It is client-side, so it is
-each player's choice, and this button remains the fallback for everyone else.
+`{progress}`, `{percent}`, `{held}`, `{deliverable}`, `{payout}` and `{full_payout}` are
+available in its body lines and tooltips.
 
-**On right-click:** dialog buttons only have one click action — the API has no separate
-right-click, and Geyser could not map it to a Bedrock form button anyway. The Preview
-button is that feature, one click instead of two.
+## External settings menus (PlaceholderAPI)
 
-## Searching
+Registers the `havocorders` expansion when PlaceholderAPI is installed, plus a standalone
+toggle command, so a settings menu can drive the alert preference without knowing anything
+about this plugin's dialogs.
 
-`/ah <anything>` searches straight from chat — no menu, no typing into a dialog field:
+| Placeholder | Value |
+| --- | --- |
+| `%havocorders_alerts_status%` | Styled ON / OFF |
+| `%havocorders_alerts_raw%` | `true` / `false` |
+| `%havocorders_active%` | Live orders |
+| `%havocorders_collectable%` | Items waiting to collect |
+| `%havocorders_escrow%` | Money tied up in outstanding orders |
 
-```
-/ah elytra
-/ah naxzyauxxy signed book
-/ah sharpness 5
-/ah map art
-```
+Command: `/toggleorderalerts` (alias `/orderalerts`).
 
-**Every word has to match**, so `naxzyauxxy signed book` finds books connected to that
-player, not everything containing "book". Words are matched against:
-
-- the real item type and material name
-- the seller's name
-- configured aliases
-- enchantments, by name and level (`sharpness 5` and `sharpness v` both work)
-- **a signed book's author** — who actually signed it, which the server sets and a player
-  cannot fake
-
-Custom item names and book titles are still excluded, because both are attacker-controlled
-text. Author is not: you can only sign a book as yourself.
-
-### Aliases
-
-Players search for "signed book", not "Written Book". Aliases add extra handles without
-changing what an item is called:
+The ON/OFF text is config-driven, since it renders inside whatever menu plugin reads it:
 
 ```yaml
-AUCTION:
-  SEARCH-ALIASES:
-    WRITTEN_BOOK: [ "signed book", "book" ]
-    FILLED_MAP: [ "map art", "mapart", "map" ]
-    ENCHANTED_GOLDEN_APPLE: [ "god apple", "notch apple", "gapple" ]
+PLACEHOLDERS:
+  ENABLED-TEXT: "<green>ON"
+  DISABLED-TEXT: "<red>OFF"
 ```
 
-Each listing bakes its aliases into a search index once when it loads, so searching never
-walks item metadata. Editing aliases applies to new listings immediately and to existing
-ones after a restart.
+Use `&a` / `&c` instead if your menu expects legacy colour codes, or plain `ON` / `OFF`.
 
-`/orders <anything>` works the same way, matching item type and the order owner.
+## Importing from the original DonutOrders
 
-## Renamed items and search
+Drop the old plugin's `orders.db` into `plugins/HavocOrders/` as `import.db` and start the
+server, or run `/orders import [file]`. The old schema (`orders` + `profiles`) is read
+directly, including its `BukkitObjectOutputStream` item blobs.
 
-Search matches the **real item type**, never the custom display name. Otherwise anyone can
-rename a block of dirt to "Elytra", list it for millions, and have it answer every elytra
-search — the display name is attacker-controlled text, so it is not something to key a
-search on.
+What comes across:
 
-Renamed listings are also flagged wherever they appear: the button label gets the real type
-appended, and the tooltip carries a red warning line plus a `Type:` row.
+| Legacy | Becomes |
+| --- | --- |
+| `id` (8 chars) | A fixed UUID derived from it, so re-importing skips duplicates |
+| `deliver` / `deliverName` | Order owner |
+| `maxAmount` / `currentAmount` / `collectedAmount` | Amount, delivered, collected |
+| `unitItemPrice` / `currentPaid` | Price and payout history |
+| `serializedItem` | The exact item, falling back to `material` if the blob won't read |
+| `createdDate` / `expireDate` | Timestamps (`DATE-FORMAT`, `TIMEZONE`) |
+| `profiles.orderAlerts` | Each player's delivery-notification choice |
+
+**The importer never moves money and never drops loot.** Delivered and paid figures come
+across as history only, because the old plugin already handled those payments. Uncollected
+items stay owed and appear in the collect screen as normal.
+
+Two settings deserve a decision before you run it:
 
 ```yaml
-AUCTION:
-  SEARCH-CUSTOM-NAMES: false
+IMPORT:
+  ESCROW-ALREADY-HELD: true
+  EXPIRY:
+    MODE: EXTEND      # or KEEP
+    EXTEND-DAYS: 7
 ```
 
-Turning it on makes search match custom names too. Only do that if you accept the above.
-The seller's name is always searchable either way.
+`ESCROW-ALREADY-HELD` decides whether cancelling an imported order pays a refund. The
+original plugin charged order value up front and refunded undelivered items, so `true` is
+correct for it — the money exists and the player is owed it. Set it to `false` if your old
+setup did not hold that money, otherwise cancelling imported orders mints currency. Orders
+carry this flag individually, so imported and native orders can coexist safely.
 
-## Durability
+`EXPIRY.MODE` handles orders that expired while the old plugin was down. `EXTEND` gives
+them a fresh window and keeps them live. `KEEP` imports them as expired — loot is still
+collectable, but no refund is issued, since the old plugin owned that decision.
 
-Damaged items show their durability on the board, the buy screen, your listings and the
-collect screen: `Durability: 384/432 (89%)`.
+Remove the old plugin before importing so the two are not running against one economy.
+The file is renamed to `*.imported` afterwards so a restart doesn't re-read it.
 
-The row is a template in `dialogs.yml`, and lines that resolve to nothing are dropped, so
-items without durability simply have no durability row rather than an empty gap:
+## Choosing enchantments on an order
+
+The New Order screen has an **Enchantments** button once an item is picked. It lists only
+the enchantments that apply to that item, and each one opens a level picker. An order can
+then be for a Sharpness V, Unbreaking III netherite sword rather than just a sword.
 
 ```yaml
-LINES:
-  DURABILITY: "&7Durability: &f{durability} &8({durability_percent}%)"
-  RENAMED: "&c! &7Renamed. Actually a &f{type}"
-  RENAMED-TAG: " &8({type})"
+SETTINGS:
+  ENCHANTS:
+    ALLOW-UNSAFE: false      # allow enchantments that do not fit the item, and over-max levels
+    MAX-UNSAFE-LEVEL: 10
 ```
 
-Placeholders: `{durability}`, `{durability_percent}`, `{type}`, `{custom_name}`,
-`{renamed}`, `{durability_line}`, `{renamed_line}`, `{renamed_tag}`.
+## How a delivery is judged
 
-## Fast mode
+```yaml
+SETTINGS:
+  MATCHING:
+    ENCHANTMENTS: "AT-LEAST"
+    IGNORE-DAMAGE: true
+    MIN-DURABILITY-PERCENT: 0
+```
 
-Carried over from the legacy `fast_auction` flag: toggling it on Your Items skips both the
-purchase and listing confirmation screens. Off by default.
+`AT-LEAST` means a delivered item must carry at least the enchantments ordered, at that
+level or higher; extras are a bonus rather than a mismatch. `EXACT` requires the
+enchantment set to match precisely.
 
-## Selling
+`IGNORE-DAMAGE` fixes elytra and tool orders. Item matching normally compares every scrap
+of data, so an elytra someone has actually flown is a different item from a pristine one
+and could never fill an order for "an elytra" — deliveries failed seemingly at random,
+depending on whether the deliverer's item happened to be untouched.
 
-Dialogs have no item slot, so the held item is the input — the same model as `/ah sell`.
-That removes a whole class of duplication bugs that come with a deposit slot. The item only
-leaves your hand once the listing is stored.
+Because wear is now ignored, **the buyer receives the exact item that was handed in**, not
+a fresh copy of the template. Orders keep the real delivered stacks rather than a count, so
+a battered elytra arrives battered. Without that, ignoring wear would have quietly turned
+the order board into a free repair service.
 
-The Sell screen also has a **per-item** button: type `500`, hit it, and a stack of 64 is
-priced at 32,000.
+Use `MIN-DURABILITY-PERCENT` if you want a floor — set it to 50 and anything under half
+durability is refused.
+
+## Spawner orders (HavocSpawners)
+
+Players can order spawners you have explicitly allowed. Hold one and run:
+
+```
+/orders spawners add zombie Zombie Spawner
+/orders spawners list
+/orders spawners remove zombie
+```
+
+Allowed spawners then appear in the item picker like any other item, and are exempt from
+the `SPAWNER` blacklist entry — the raw vanilla block stays blocked, the allowed spawner
+does not.
+
+**Why the item is captured rather than named.** A spawner is stored as an item with its
+entity type, item material, upgrade level, stack size, stored loot and stored experience in
+its item data. Capturing the item you are holding means the order template is byte-identical
+to what HavocSpawners produces, with no assumptions about that format.
+
+**Why matching is not `isSimilar`.** Delivery normally compares every scrap of item data.
+For spawners that is wrong: a zombie spawner with a few stacks of rotten flesh inside is a
+different item to `isSimilar` than an empty one, so an order would never fill. Spawner
+orders match on identity instead — entity type, item material, and optionally level —
+ignoring stored loot, experience and stack size.
+
+```yaml
+SPAWNERS:
+  ENABLED: true
+  MATCH-LEVEL: true            # a level 3 is a different order from a level 1
+  REQUIRE-EMPTY-STORAGE: true  # refuse spawners that still hold loot
+  REQUIRE-SINGLE: true         # refuse stacked spawners
+```
+
+`REQUIRE-EMPTY-STORAGE` matters: an order hands the buyer a clean copy of the template, so
+accepting a full spawner would silently delete whatever was inside it. Off by default it
+would be a quiet item-loss bug, so it is on.
+
+The hook is entirely reflective and optional. Without HavocSpawners installed the plugin
+runs exactly as before and spawner orders never appear.
+
+If `/orders spawners add` is not behaving, run:
+
+```
+/orders spawners status
+```
+
+It reports exactly why support is off — not installed, not enabled yet, disabled in config,
+or an API mismatch — instead of failing silently. The hook also retries on demand, so it
+recovers if HavocSpawners enables after this plugin.
+
+## Order limits
+
+`MAX-ORDERS-PER-PLAYER` defaults to **0, meaning unlimited**. Set it to a number to cap
+active orders per player; admins with `havocorders.admin` bypass any cap.
+
+```yaml
+SETTINGS:
+  MAX-ORDERS-PER-PLAYER: 0
+```
+
+Escrow still applies per order, so a player's real limit is their balance.
+
+## Bulk orders
+
+Orders are built for volume. Defaults:
+
+| Setting | Default |
+| --- | --- |
+| `MAX-ITEM-AMOUNT` | 1,000,000 items per order |
+| `MAX-PRICE-AMOUNT` | 10,000,000 per item |
+| `MAX-ORDER-VALUE` | 1,000,000,000 total (`0` disables the check) |
+
+`MAX-ORDER-VALUE` is the one that matters: amount x price is what gets pulled from the
+player's balance up front, so the ceiling stops someone posting an order worth more than
+your economy can represent.
+
+Large orders never materialise as item stacks. Loot is tracked as a count against the
+order, the collect screen shows one entry per order rather than one per stack, and drops
+cut stacks off a counter as they are released. A million-item order costs the same memory
+as a one-item order.
+
+## Dropping loot
+
+The Collect dialog has three drop buttons:
+
+- **Drop Page** — the entries currently on screen
+- **Drop N Pages** — the next N pages from where you are (`SETTINGS.DROP.PAGE-BATCH`)
+- **Drop All** — everything, behind a confirmation dialog
+
+Stacks are generated as they are dropped, a few per tick (`MAX-STACKS-PER-TICK`, default
+24), so "Drop All" on a million items is a slow trickle rather than a frozen server.
+`MAX-TOTAL-STACKS` is an optional ceiling on one drop action (`0` = no limit). Book-keeping
+happens up front, so nothing is ever owed twice — and if you log out mid-drop, the
+remainder falls where you were standing instead of vanishing.
+
+Because collect entries are per order rather than per stack, the page buttons only matter
+if you have more waiting orders than `COLLECT-PER-PAGE`.
 
 ## Durability of data, and why writes are immediate
 
@@ -294,7 +424,7 @@ for a minute, and logs when it hooks in. Commands report the missing economy unt
 
 ## Live config reloading
 
-`config.yml` and `dialogs.yml` are re-read when their timestamps change, so edits apply
+`config.yml` and `menus.yml` are re-read when their timestamps change, so edits apply
 without a restart or a reload command:
 
 ```yaml
@@ -307,7 +437,7 @@ it is unrelated to duplication.
 ## Updating
 
 New settings from a plugin update are written into your existing `config.yml` and
-`dialogs.yml` on startup. Your values are never changed, nothing is removed, and the
+`menus.yml` on startup. Your values are never changed, nothing is removed, and the
 previous file is saved as `config.yml.bak`. The console lists every key it added.
 
 ```yaml
@@ -320,81 +450,29 @@ So a *new* setting appears by itself, but a *changed default* is still yours to 
 
 ## Performance
 
-- Every listing lives in memory; the database is only ever written to, in batches.
-- Writes go into a dirty set flushed by one async transaction every 30s.
-- Listings are indexed by seller and by buyer, so Your Items and History never scan.
-- The board caches its filtered, sorted result per player behind a version counter — a page
-  turn is a list slice.
-- Item names, materials and stack sizes are computed once at load, so filtering and
-  searching never decode an item.
-- Drops release a few stacks per tick rather than all at once.
-- `HISTORY-KEEP-DAYS` (default 30) purges old sold rows. Each carries a serialised item, so
-  this is the memory dial — raise it for a longer log, lower it on a busy server.
+- The full order set lives in memory; nothing queries the database during play.
+- Writes go into a dirty set flushed by **one** batched async transaction every 30s
+  (`SAVE-INTERVAL-SECONDS`), so a busy server doesn't spawn a thread per delivery.
+- Orders are indexed by owner, so "your orders" never scans the whole set.
+- The board caches its filtered, sorted result per player and rebuilds only when the order
+  set actually changed (a version counter) or the player changed a filter — a page turn is
+  a list slice.
+- Order quantity is a number, never a list of stacks, so bulk orders cost nothing extra.
+- The item picker is pre-bucketed by category with pre-lowercased names, so filtering is a
+  map lookup and searching is one pass over an already-narrowed list.
+- Dialog buttons use local click callbacks, so there is no global event handler firing for
+  every dialog click on the server.
+- The only repeating tasks are the expiry sweep (60s) and the save flush (30s).
 
-## External settings menus (PlaceholderAPI)
+## Sell All
 
-Registers the `havocauction` expansion when PlaceholderAPI is installed, plus standalone
-toggle commands, so a settings menu can drive both preferences directly.
-
-| Placeholder | Value |
-| --- | --- |
-| `%havocauction_alerts_status%` | Styled ON / OFF |
-| `%havocauction_fast_status%` | Styled ON / OFF for fast mode |
-| `%havocauction_alerts_raw%` / `%havocauction_fast_raw%` | `true` / `false` |
-| `%havocauction_listings%` | Live listings |
-| `%havocauction_collectable%` | Listings waiting to collect |
-| `%havocauction_listed_value%` | Asking value of your live listings |
-| `%havocauction_total_made%` / `%havocauction_total_spent%` / `%havocauction_net%` | Lifetime totals |
-| `%havocauction_sales%` / `%havocauction_purchases%` | Lifetime counts |
-| `%havocauction_board_size%` | Listings on the board right now (no player needed) |
-
-Commands: `/toggleauctionalerts` (alias `/ahalerts`), `/togglefastauction` (alias
-`/fastauction`).
-
-The ON/OFF text is config-driven, since it renders inside whatever menu plugin reads it:
-
-```yaml
-PLACEHOLDERS:
-  ENABLED-TEXT: "<green>ON"
-  DISABLED-TEXT: "<red>OFF"
-```
-
-Use `&a` / `&c` instead if your menu expects legacy colour codes, or plain `ON` / `OFF`.
-
-## Importing from DonutAuction
-
-Drop the old `auction.db` into `plugins/HavocAuction/` as `import.db` and start the server,
-or run `/ah import`. Legacy ids are preserved, so re-running skips anything already there.
-
-The old schema stores UUIDs as raw 16-byte blobs and items as `BukkitObjectOutputStream`
-dumps; both are read directly.
-
-| Legacy status | Becomes |
-| --- | --- |
-| `ACTIVE` | Back on the board |
-| `CANCELLED` | Item waiting in the seller's collect screen |
-| `SOLD` | History row — feeds the transaction log and lifetime totals |
-
-`auction_profiles.alerts` and `fast_auction` come across as the two toggles on Your Items.
-
-**The importer moves no money and hands out no items.** Sold rows are history only; the old
-plugin already settled that money.
-
-```yaml
-IMPORT:
-  IMPORT-HISTORY: true    # false for a clean start with no transaction log
-  EXPIRY:
-    MODE: EXTEND          # or KEEP: import as expired, item waits for collection
-    EXTEND-DAYS: 7
-```
-
-Remove the old plugin first so the two are not running against one economy.
+`SELL.PRICES` sets the per-item value; anything missing falls back to `SELL.DEFAULT-PRICE`
+(`0` = not sellable, stays in the collect list). `SELL.MULTIPLIER` scales everything.
 
 ## Config files
 
-- `config.yml` — database, economy, fees, limits, history retention, import, messages
-- `dialogs.yml` — every title, body line, button label and tooltip, with `{placeholders}`,
-  hex colours, and per-dialog `COLUMNS`
+- `config.yml` — database, economy, limits, sell prices, drop safety, messages
+- `menus.yml` — every layout, title, body line, button label, material and tooltip
 
 ## Build
 
@@ -402,4 +480,18 @@ Remove the old plugin first so the two are not running against one economy.
 mvn clean package
 ```
 
-Jar lands in `target/HavocAuction-1.0.0.jar`. CI is in `.github/workflows/build.yml`.
+Jar lands in `target/HavocOrders-1.0.0.jar`. CI is in `.github/workflows/build.yml`.
+
+## Layout
+
+```
+net.eclipse.havocorders
+├── HavocOrders            entry point, config, scheduling, spread-drop
+├── command/               /orders
+├── dialog/                Screen base, Dialogs helpers, one class per screen
+├── economy/               Vault hook, sell prices
+├── manager/               OrderManager, ItemCatalogue, Session, SessionManager
+├── model/                 Order, OrderStatus, SortOption
+├── storage/               SqlStorage (SQLite / MySQL, batched)
+└── util/                  Text, NumberUtil, ItemNames, Category, ...
+```
