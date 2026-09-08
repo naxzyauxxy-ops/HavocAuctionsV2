@@ -1,11 +1,9 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -29,23 +27,23 @@ public class DropConfirmScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(placeholders());
     }
 
     @Override
-    protected List<DialogBody> body() {
-        return Dialogs.body(lines("BODY"), placeholders());
+    public List<String> bodyLines() {
+        return resolve(lines("BODY"), placeholders());
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", placeholders(), () -> new CollectScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
-        return List.of(configButton("CONFIRM", placeholders(), (view, audience) -> {
+    public List<ScreenModel.Button> buttons() {
+        return List.of(configButton("CONFIRM", placeholders(), responses -> {
             int dropped = plugin.auction().dropListings(player,
                     plugin.auction().collectable(player.getUniqueId()));
             if (dropped > 0) {

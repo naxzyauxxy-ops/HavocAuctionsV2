@@ -1,13 +1,11 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.model.Listing;
 import net.eclipse.havocauction.util.ItemNames;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.enchantments.Enchantment;
@@ -75,25 +73,24 @@ public class ContainerPreviewScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         Listing listing = listing();
         return titleFrom(listing == null ? Map.of() : Placeholders.of(plugin, listing));
     }
 
     @Override
-    protected List<DialogBody> body() {
+    public List<String> bodyLines() {
         Listing listing = listing();
         if (listing == null) {
-            return List.of(DialogBody.plainMessage(Text.component(plugin.message("LISTING-UNAVAILABLE"))));
+            return List.of(plugin.message("LISTING-UNAVAILABLE"));
         }
 
         ItemStack item = listing.getItemCopy();
-        List<DialogBody> body = new ArrayList<>();
+        List<String> body = new ArrayList<>();
 
         // The item itself, large. Tooltips are on, which is what makes a filled map show
         // its actual art on hover rather than just the map icon.
-        body.add(Dialogs.item(item, previewSize()));
-        body.addAll(Dialogs.body(lines("BODY"), common(Placeholders.of(plugin, listing)), style()));
+        body.addAll(resolve(lines("BODY"), Placeholders.of(plugin, listing)));
 
         if (isMap(item)) {
             body.addAll(mapDetails(item));
@@ -111,14 +108,13 @@ public class ContainerPreviewScreen extends Screen {
             return body;
         }
 
-        List<DialogBody> enchants = enchantDetails(item);
+        List<String> enchants = enchantDetails(item);
         if (!enchants.isEmpty()) {
             body.addAll(enchants);
             return body;
         }
 
-        body.add(DialogBody.plainMessage(Text.component(
-                style().text(string("EMPTY", "&7Nothing else to show for this item.")))));
+        body.add(style().text(string("EMPTY", "&7Nothing else to show for this item.")));
         return body;
     }
 
@@ -128,13 +124,13 @@ public class ContainerPreviewScreen extends Screen {
         return item.getType() == Material.FILLED_MAP;
     }
 
-    private List<DialogBody> mapDetails(ItemStack item) {
-        List<DialogBody> body = new ArrayList<>();
+    private List<String> mapDetails(ItemStack item) {
+        List<String> body = new ArrayList<>();
         String header = string("MAP-HEADER", "&#f40d0dMap art");
-        body.add(DialogBody.plainMessage(Text.component(style().text(header))));
+        body.add(style().text(header));
 
         String hint = string("MAP-HINT", "&7Hover the map above to see the art.");
-        body.add(DialogBody.plainMessage(Text.component(style().text(hint))));
+        body.add(style().text(hint));
 
         if (!(item.getItemMeta() instanceof MapMeta meta) || !meta.hasMapView()) return body;
         MapView view = meta.getMapView();
@@ -147,7 +143,7 @@ public class ContainerPreviewScreen extends Screen {
                 "world", view.getWorld() == null ? "unknown" : view.getWorld().getName());
 
         for (String line : Text.applyPruned(lines("MAP-LINES"), placeholders)) {
-            body.add(DialogBody.plainMessage(Text.component(style().text(line))));
+            body.add(style().text(line));
         }
         return body;
     }
@@ -160,13 +156,13 @@ public class ContainerPreviewScreen extends Screen {
      * Worth showing before a purchase: a signed original by a known player is a very
      * different thing from a copy of a copy, and the two look identical on the board.
      */
-    private List<DialogBody> bookDetails(ItemStack item, BookMeta book) {
-        List<DialogBody> body = new ArrayList<>();
+    private List<String> bookDetails(ItemStack item, BookMeta book) {
+        List<String> body = new ArrayList<>();
         boolean signed = item.getType() == Material.WRITTEN_BOOK;
 
-        body.add(DialogBody.plainMessage(Text.component(style().text(
+        body.add(style().text(
                 string(signed ? "BOOK-HEADER" : "BOOK-HEADER-UNSIGNED",
-                        signed ? "&#f40d0dSigned book" : "&#f40d0dBook and quill")))));
+                        signed ? "&#f40d0dSigned book" : "&#f40d0dBook and quill")));
 
         Map<String, String> placeholders = Map.of(
                 "title", book.hasTitle() && book.getTitle() != null ? book.getTitle() : "untitled",
@@ -177,7 +173,7 @@ public class ContainerPreviewScreen extends Screen {
 
         for (String line : Text.applyPruned(lines(signed ? "BOOK-LINES" : "BOOK-LINES-UNSIGNED"),
                 placeholders)) {
-            body.add(DialogBody.plainMessage(Text.component(style().text(line))));
+            body.add(style().text(line));
         }
 
         // A taste of the contents, capped so a long book cannot flood the screen.
@@ -187,8 +183,8 @@ public class ContainerPreviewScreen extends Screen {
             if (first != null && !first.isBlank()) {
                 String snippet = first.replace("\n", " ").trim();
                 if (snippet.length() > limit) snippet = snippet.substring(0, limit) + "...";
-                body.add(DialogBody.plainMessage(Text.component(style().text(
-                        Text.apply(string("BOOK-PAGE", "&8\"{page}\""), Map.of("page", snippet))))));
+                body.add(style().text(
+                        Text.apply(string("BOOK-PAGE", "&8\"{page}\""), Map.of("page", snippet))));
             }
         }
         return body;
@@ -196,8 +192,8 @@ public class ContainerPreviewScreen extends Screen {
 
     // ------------------------------------------------------------------ containers
 
-    private List<DialogBody> containerDetails(List<ItemStack> contents) {
-        List<DialogBody> body = new ArrayList<>();
+    private List<String> containerDetails(List<ItemStack> contents) {
+        List<String> body = new ArrayList<>();
         int limit = Math.max(1, plugin.getConfig().getInt("DIALOG.PREVIEW-MAX-CONTENTS", 27));
         String format = string("LINE", "&7- &f{amount}x {item}");
 
@@ -205,24 +201,23 @@ public class ContainerPreviewScreen extends Screen {
         for (ItemStack stack : contents) {
             if (shown++ >= limit) break;
             // Icon plus label, so the contents look like a container rather than a list.
-            body.add(Dialogs.item(stack.clone(), contentSize()));
-            body.add(DialogBody.plainMessage(Text.component(style().text(Text.apply(format, Map.of(
+            body.add(style().text(Text.apply(format, Map.of(
                     "amount", NumberUtil.count(stack.getAmount()),
-                    "item", ItemNames.display(stack)))))));
+                    "item", ItemNames.display(stack)))));
         }
 
         if (contents.size() > limit) {
-            body.add(DialogBody.plainMessage(Text.component(style().text(
+            body.add(style().text(
                     Text.apply(string("MORE", "&8...and {count} more"),
-                            Map.of("count", String.valueOf(contents.size() - limit)))))));
+                            Map.of("count", String.valueOf(contents.size() - limit)))));
         }
         return body;
     }
 
     // ------------------------------------------------------------------ enchantments
 
-    private List<DialogBody> enchantDetails(ItemStack item) {
-        List<DialogBody> body = new ArrayList<>();
+    private List<String> enchantDetails(ItemStack item) {
+        List<String> body = new ArrayList<>();
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return body;
 
@@ -233,23 +228,23 @@ public class ContainerPreviewScreen extends Screen {
 
         String format = string("ENCHANT-LINE", "&7- &f{enchantment} {level}");
         for (Map.Entry<Enchantment, Integer> entry : enchants.entrySet()) {
-            body.add(DialogBody.plainMessage(Text.component(style().text(Text.apply(format, Map.of(
+            body.add(style().text(Text.apply(format, Map.of(
                     "enchantment", ItemNames.enchantment(entry.getKey()),
-                    "level", Text.roman(entry.getValue())))))));
+                    "level", Text.roman(entry.getValue())))));
         }
         return body;
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         Listing listing = listing();
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
         // A vanilla client only draws map art for a map it is holding, so the only way to
         // show it is to lend the map for a few seconds.
         if (listing != null && listing.isMap()) {
             buttons.add(configButton("VIEW-MAP", Placeholders.of(plugin, listing),
-                    (view, audience) -> {
+                    responses -> {
                         click();
                         plugin.mapPreview().show(player, listing.getItemCopy());
                     }));

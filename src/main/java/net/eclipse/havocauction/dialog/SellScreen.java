@@ -1,14 +1,11 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
-import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.manager.AuctionManager;
 import net.eclipse.havocauction.util.ItemNames;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -65,39 +62,36 @@ public class SellScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(placeholders());
     }
 
     @Override
-    protected List<DialogBody> body() {
-        List<DialogBody> body = new ArrayList<>();
+    public List<String> bodyLines() {
+        List<String> body = new ArrayList<>();
         ItemStack held = held();
-        if (held != null) body.add(itemBody(held.clone()));
-        body.addAll(Dialogs.body(lines(held == null ? "BODY-EMPTY" : "BODY"), placeholders()));
+        if (held != null) body.addAll(resolve(lines(held == null ? "BODY-EMPTY" : "BODY"), placeholders()));
         return body;
     }
 
     @Override
-    protected List<DialogInput> inputs() {
+    public List<ScreenModel.Input> inputs() {
         double price = session.getDraftPrice();
-        return List.of(DialogInput.text(PRICE, Text.component(string("PRICE-LABEL", "&fPrice")))
-                .initial(price > 0 ? NumberUtil.exact(price) : "")
-                .build());
+        return List.of(new ScreenModel.Input(PRICE, string("PRICE-LABEL", "&fPrice"), price > 0 ? NumberUtil.exact(price) : ""));
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", placeholders(), () -> new MyListingsScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         Map<String, String> placeholders = placeholders();
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
-        buttons.add(configButton("CONFIRM", placeholders, (view, audience) -> {
-            String typed = view.getText(PRICE);
+        buttons.add(configButton("CONFIRM", placeholders, responses -> {
+            String typed = responses.text(PRICE);
             // A blank box on Bedrock is Geyser losing the value, not the player asking
             // for a free listing. Fall back to any price already set, then the command.
             Double price = typed == null || typed.isBlank()
@@ -126,9 +120,9 @@ public class SellScreen extends Screen {
             }
         }));
 
-        buttons.add(configButton("PRICE-PER-ITEM", placeholders, (view, audience) -> {
+        buttons.add(configButton("PRICE-PER-ITEM", placeholders, responses -> {
             // Treat the typed number as a per-item price and scale it to the stack.
-            String typedEach = view.getText(PRICE);
+            String typedEach = responses.text(PRICE);
             Double each = typedEach == null || typedEach.isBlank() ? null : NumberUtil.parse(typedEach);
             ItemStack held = held();
             if (each == null || each <= 0 || held == null) {

@@ -1,11 +1,8 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
-import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -38,32 +35,30 @@ public class SearchScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(Map.of());
     }
 
     @Override
-    protected List<DialogBody> body() {
-        return Dialogs.body(lines("BODY"), Map.of());
+    public List<String> bodyLines() {
+        return resolve(lines("BODY"), Map.of());
     }
 
     @Override
-    protected List<DialogInput> inputs() {
-        return List.of(DialogInput.text(KEY, Text.component(string("INPUT-LABEL", "&fSearch")))
-                .initial(initial)
-                .build());
+    public List<ScreenModel.Input> inputs() {
+        return List.of(new ScreenModel.Input(KEY, string("INPUT-LABEL", "&fSearch"), initial));
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", Map.of(), onBack);
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         return List.of(
-                configButton("CONFIRM", Map.of(), (view, audience) -> {
-                    String value = view.getText(KEY);
+                configButton("CONFIRM", Map.of(), responses -> {
+                    String value = responses.text(KEY);
                     click();
                     if (value == null || value.isBlank()) {
                         if (isBedrock()) tell(plugin.message("SEARCH-USE-COMMAND"));
@@ -72,7 +67,7 @@ public class SearchScreen extends Screen {
                     }
                     onSubmit.accept(value.trim());
                 }),
-                configButton("CLEAR", Map.of(), (view, audience) -> {
+                configButton("CLEAR", Map.of(), responses -> {
                     click();
                     onSubmit.accept("");
                 })

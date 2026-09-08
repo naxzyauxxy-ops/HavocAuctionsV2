@@ -91,6 +91,32 @@ Detection goes through Floodgate by reflection — no compile-time dependency, a
 without Floodgate simply treats everyone as Java. Java players see no difference either
 way; both adaptations are per-viewer.
 
+## Dialog or chest menus
+
+One setting decides how every menu is drawn, for the whole server:
+
+```yaml
+UI-MODE: "DIALOG"   # or MODERN
+```
+
+- **DIALOG** — Minecraft's dialog windows. Private text fields, renders on Bedrock through
+  Geyser. Needs Paper 1.21.7+ and a 1.21.6+ client.
+- **MODERN** — classic chest menus. Works on any client and any server version.
+
+Both modes render the **same screen definitions**. A screen describes what it wants — a
+title, some lines, some inputs, some buttons — and a renderer turns that into a dialog or a
+chest. That is deliberate: two separate menu systems would mean every future feature built
+twice, and the two drifting apart. Add a button once and it appears in both.
+
+Layout in chest mode is worked out from the button count rather than a slot map, so there
+is no per-menu slot config to maintain. Content buttons fill from the top, controls sit on
+the bottom row.
+
+**One real trade-off.** A chest has nowhere to type, so in MODERN mode text entry — search,
+prices, amounts — falls back to a chat prompt. Other players cannot see it, but
+chat-logging plugins can. Dialog mode keeps those as proper private fields. If search
+privacy matters to you, that is the reason to stay on DIALOG.
+
 ## Search privacy
 
 Search uses the dialog's own text field, so it goes client-to-server with the button click

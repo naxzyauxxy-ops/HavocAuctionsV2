@@ -1,13 +1,11 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.manager.AuctionManager;
 import net.eclipse.havocauction.model.Listing;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -78,36 +76,36 @@ public class TransactionsScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(screen(results()));
     }
 
     @Override
-    protected List<DialogBody> body() {
+    public List<String> bodyLines() {
         List<Listing> results = results();
-        List<DialogBody> body = Dialogs.body(lines("BODY"), screen(results));
+        List<String> body = resolve(lines("BODY"), screen(results));
         if (results.isEmpty()) {
-            body.add(DialogBody.plainMessage(Text.component(string("EMPTY", "&7No transactions yet."))));
+            body.add(string("EMPTY", "&7No transactions yet."));
         }
         return body;
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", screen(results()), () -> new MyListingsScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         List<Listing> results = results();
         Map<String, String> screen = screen(results);
         int pages = totalPages(results.size(), perPage());
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
         for (Listing listing : slice(results, session.getTransactionsPage(), perPage())) {
             boolean sold = listing.getSeller().equals(player.getUniqueId());
             buttons.add(configButton(sold ? "SALE" : "PURCHASE", Placeholders.of(plugin, listing),
-                    (view, audience) -> {
+                    responses -> {
                         if (listing.isPreviewable()) {
                             click();
                             new ContainerPreviewScreen(plugin, player, listing.getId(),
@@ -120,21 +118,21 @@ public class TransactionsScreen extends Screen {
         }
 
         if (session.getTransactionsPage() > 0) {
-            buttons.add(configButton("PREVIOUS", screen, (view, audience) -> {
+            buttons.add(configButton("PREVIOUS", screen, responses -> {
                 session.setTransactionsPage(session.getTransactionsPage() - 1);
                 click();
                 show();
             }));
         }
         if (session.getTransactionsPage() < pages - 1) {
-            buttons.add(configButton("NEXT", screen, (view, audience) -> {
+            buttons.add(configButton("NEXT", screen, responses -> {
                 session.setTransactionsPage(session.getTransactionsPage() + 1);
                 click();
                 show();
             }));
         }
 
-        buttons.add(configButton("SEARCH", screen, (view, audience) -> {
+        buttons.add(configButton("SEARCH", screen, responses -> {
             click();
             new SearchScreen(plugin, player, session.getTransactionQuery(), value -> {
                 session.setTransactionQuery(value);

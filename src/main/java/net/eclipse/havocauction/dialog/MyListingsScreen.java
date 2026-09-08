@@ -1,12 +1,10 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.model.Listing;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -59,73 +57,73 @@ public class MyListingsScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(screen(results()));
     }
 
     @Override
-    protected List<DialogBody> body() {
+    public List<String> bodyLines() {
         List<Listing> results = results();
-        List<DialogBody> body = Dialogs.body(lines("BODY"), screen(results));
+        List<String> body = resolve(lines("BODY"), screen(results));
         if (results.isEmpty()) {
-            body.add(DialogBody.plainMessage(Text.component(string("EMPTY", "&7You have nothing listed."))));
+            body.add(string("EMPTY", "&7You have nothing listed."));
         }
         return body;
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", screen(results()), () -> new AuctionScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         List<Listing> results = results();
         Map<String, String> screen = screen(results);
         int pages = totalPages(results.size(), perPage());
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
         for (Listing listing : slice(results, session.getMyListingsPage(), perPage())) {
-            buttons.add(configButton("LISTING", Placeholders.of(plugin, listing), (view, audience) -> {
+            buttons.add(configButton("LISTING", Placeholders.of(plugin, listing), responses -> {
                 click();
                 new ManageListingScreen(plugin, player, listing.getId()).show();
             }));
         }
 
         if (session.getMyListingsPage() > 0) {
-            buttons.add(configButton("PREVIOUS", screen, (view, audience) -> {
+            buttons.add(configButton("PREVIOUS", screen, responses -> {
                 session.setMyListingsPage(session.getMyListingsPage() - 1);
                 click();
                 show();
             }));
         }
         if (session.getMyListingsPage() < pages - 1) {
-            buttons.add(configButton("NEXT", screen, (view, audience) -> {
+            buttons.add(configButton("NEXT", screen, responses -> {
                 session.setMyListingsPage(session.getMyListingsPage() + 1);
                 click();
                 show();
             }));
         }
 
-        buttons.add(configButton("SELL", screen, (view, audience) -> {
+        buttons.add(configButton("SELL", screen, responses -> {
             click();
             new SellScreen(plugin, player).show();
         }));
-        buttons.add(configButton("COLLECT", screen, (view, audience) -> {
+        buttons.add(configButton("COLLECT", screen, responses -> {
             click();
             new CollectScreen(plugin, player).show();
         }));
-        buttons.add(configButton("TRANSACTIONS", screen, (view, audience) -> {
+        buttons.add(configButton("TRANSACTIONS", screen, responses -> {
             click();
             new TransactionsScreen(plugin, player).show();
         }));
-        buttons.add(configButton("ALERTS", screen, (view, audience) -> {
+        buttons.add(configButton("ALERTS", screen, responses -> {
             boolean enabled = plugin.profiles().toggleAlerts(player.getUniqueId());
             click();
             tell(plugin.message(enabled ? "ALERTS-ON" : "ALERTS-OFF"));
             show();
         }));
-        buttons.add(configButton("FAST-BUY", screen, (view, audience) -> {
+        buttons.add(configButton("FAST-BUY", screen, responses -> {
             boolean enabled = plugin.profiles().toggleFastBuy(player.getUniqueId());
             click();
             tell(plugin.message(enabled ? "FAST-BUY-ON" : "FAST-BUY-OFF"));

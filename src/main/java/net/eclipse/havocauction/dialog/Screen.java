@@ -1,18 +1,15 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.dialog.Dialog;
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.action.DialogActionCallback;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
-import io.papermc.paper.registry.data.dialog.input.DialogInput;
 import net.eclipse.havocauction.HavocAuction;
 import net.eclipse.havocauction.manager.Session;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.util.Bedrock;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.Map;
@@ -33,36 +30,50 @@ public abstract class Screen {
     /** Section name under DIALOGS in dialogs.yml. */
     protected abstract String configPath();
 
-    protected abstract Component title();
+    public abstract String title();
 
-    protected abstract List<DialogBody> body();
+    /** Lines of explanatory text. Dialogs show them as body; chests as item lore. */
+    public abstract List<String> bodyLines();
 
-    protected List<DialogInput> inputs() {
-        return List.of();
-    }
-
-    protected abstract List<ActionButton> buttons();
-
-    /** Footer button, shown under the grid. Usually back or close. */
-    protected ActionButton exitButton() {
+    /** Optional item shown alongside the body. */
+    public ItemStack bodyIcon() {
         return null;
     }
 
+    public List<ScreenModel.Input> inputs() {
+        return List.of();
+    }
+
+    public abstract List<ScreenModel.Button> buttons();
+
+    /** Footer button, shown under the grid. Usually back or close. */
+    public ScreenModel.Button exitButton() {
+        return null;
+    }
+
+    public Player viewer() {
+        return player;
+    }
+
     /** Grid width. A per-dialog COLUMNS entry wins over the global default. */
-    protected int columns() {
+    public int columns() {
         int fallback = plugin.getConfig().getInt("DIALOG.COLUMNS", 3);
         ConfigurationSection section = section();
         int columns = section == null ? fallback : section.getInt("COLUMNS", fallback);
         return Math.max(1, columns);
     }
 
-    /** Item preview body at the configured size. */
-    protected DialogBody itemBody(org.bukkit.inventory.ItemStack stack) {
-        return Dialogs.item(stack, plugin.getConfig().getInt("DIALOG.ITEM-SIZE", 48));
+    public int itemSize() {
+        return plugin.getConfig().getInt("DIALOG.ITEM-SIZE", 48);
+    }
+
+    /** Resolves configured lines, dropping any that end up empty. */
+    protected List<String> resolve(List<String> lines, Map<String, String> placeholders) {
+        return Text.applyPruned(lines, common(placeholders));
     }
 
     /** Button width in pixels. The API caps this at 1024. */
-    protected int width() {
+    public int width() {
         int width = plugin.getConfig().getInt("DIALOG.BUTTON-WIDTH", 200);
         return Math.max(1, Math.min(1024, width));
     }
@@ -98,7 +109,7 @@ public abstract class Screen {
     }
 
     /** Rendering rules for whoever is looking at this screen. */
-    protected Dialogs.Style style() {
+    public Dialogs.Style style() {
         if (!Bedrock.isBedrock(player)) return Dialogs.Style.JAVA;
         return new Dialogs.Style(
                 plugin.getConfig().getBoolean("BEDROCK.ASCII-LABELS", true),
@@ -109,28 +120,46 @@ public abstract class Screen {
         return Bedrock.isBedrock(player);
     }
 
-    protected ActionButton configButton(String key, Map<String, String> placeholders,
-                                        DialogActionCallback callback) {
-        return Dialogs.fromConfig(button(key), placeholders, width(), callback, style());
+    protected ScreenModel.Button configButton(String key, Map<String, String> placeholders,
+                                              ScreenModel.Action action) {
+        return configButton(key, placeholders, null, action);
+    }
+
+    /** Same, with an item to show in chest mode. Dialogs ignore the icon. */
+    protected ScreenModel.Button configButton(String key, Map<String, String> placeholders,
+                                              ItemStack icon, ScreenModel.Action action) {
+        ConfigurationSection section = button(key);
+        String label = section == null ? key : section.getString("LABEL", key);
+        List<String> tooltip = section == null ? List.of() : section.getStringList("TOOLTIP");
+        Material fallback = section == null ? null
+                : Material.matchMaterial(section.getString("MATERIAL", "PAPER"));
+
+        return ScreenModel.Button.of(key,
+                Text.apply(label, common(placeholders)),
+                Text.applyPruned(tooltip, common(placeholders)),
+                icon, fallback == null ? Material.PAPER : fallback, action);
+    }
+
+    /** A button with no action: closes the screen. */
+    protected ScreenModel.Button closeButton(String key, Map<String, String> placeholders) {
+        return configButton(key, placeholders, null, null);
     }
 
     /** Footer button that just navigates somewhere else. */
-    protected ActionButton backButton(String key, Map<String, String> placeholders,
-                                      Runnable target) {
-        return configButton(key, placeholders, (view, audience) -> {
+    protected ScreenModel.Button backButton(String key, Map<String, String> placeholders,
+                                            Runnable target) {
+        return configButton(key, placeholders, responses -> {
             click();
             target.run();
         });
     }
 
-    protected Component titleFrom(Map<String, String> placeholders) {
-        return Text.component(style().text(Text.apply(string("TITLE", "Menu"), placeholders)));
+    protected String titleFrom(Map<String, String> placeholders) {
+        return style().text(Text.apply(string("TITLE", "Menu"), common(placeholders)));
     }
 
     public void show() {
-        Dialog dialog = Dialogs.build(title(), body(), inputs(), buttons(),
-                exitButton(), columns());
-        player.showDialog(dialog);
+        plugin.renderer().render(this);
     }
 
     /** Re-show this screen after an action. Runs on the main thread next tick. */

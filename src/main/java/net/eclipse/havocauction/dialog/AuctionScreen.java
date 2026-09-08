@@ -1,13 +1,11 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.model.Listing;
 import net.eclipse.havocauction.util.Category;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -83,36 +81,36 @@ public class AuctionScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(screen(results()));
     }
 
     @Override
-    protected List<DialogBody> body() {
+    public List<String> bodyLines() {
         List<Listing> results = results();
-        List<DialogBody> body = Dialogs.body(lines("BODY"), screen(results));
+        List<String> body = resolve(lines("BODY"), screen(results));
         if (results.isEmpty()) {
-            body.add(DialogBody.plainMessage(Text.component(string("EMPTY", "&7Nothing listed."))));
+            body.add(string("EMPTY", "&7Nothing listed."));
         }
         return body;
     }
 
     @Override
-    protected ActionButton exitButton() {
-        return Dialogs.closeButton(button("CLOSE"), screen(results()), width(), style());
+    public ScreenModel.Button exitButton() {
+        return closeButton("CLOSE", screen(results()));
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         List<Listing> results = results();
         Map<String, String> screen = screen(results);
         int pages = totalPages(results.size(), perPage());
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
         for (Listing listing : slice(results, session.getPage(), perPage())) {
             boolean mine = listing.getSeller().equals(player.getUniqueId());
             Map<String, String> placeholders = Placeholders.of(plugin, listing);
-            buttons.add(configButton(mine ? "OWN-LISTING" : "LISTING", placeholders, (view, audience) -> {
+            buttons.add(configButton(mine ? "OWN-LISTING" : "LISTING", placeholders, responses -> {
                 click();
                 // Your own listing goes to its management screen rather than a purchase
                 // dialog you are not allowed to complete.
@@ -125,38 +123,38 @@ public class AuctionScreen extends Screen {
         }
 
         if (session.getPage() > 0) {
-            buttons.add(configButton("PREVIOUS", screen, (view, audience) -> {
+            buttons.add(configButton("PREVIOUS", screen, responses -> {
                 session.setPage(session.getPage() - 1);
                 click();
                 show();
             }));
         }
         if (session.getPage() < pages - 1) {
-            buttons.add(configButton("NEXT", screen, (view, audience) -> {
+            buttons.add(configButton("NEXT", screen, responses -> {
                 session.setPage(session.getPage() + 1);
                 click();
                 show();
             }));
         }
 
-        buttons.add(configButton("SORT", screen, (view, audience) -> {
+        buttons.add(configButton("SORT", screen, responses -> {
             session.setSort(session.getSort().next());
             click();
             show();
         }));
-        buttons.add(configButton("FILTER", screen, (view, audience) -> {
+        buttons.add(configButton("FILTER", screen, responses -> {
             session.setFilter(session.getFilter().next());
             click();
             show();
         }));
-        buttons.add(configButton("SEARCH", screen, (view, audience) -> {
+        buttons.add(configButton("SEARCH", screen, responses -> {
             click();
             new SearchScreen(plugin, player, session.getQuery(), value -> {
                 session.setQuery(value);
                 new AuctionScreen(plugin, player).show();
             }, () -> new AuctionScreen(plugin, player).show()).show();
         }));
-        buttons.add(configButton("MY-LISTINGS", screen, (view, audience) -> {
+        buttons.add(configButton("MY-LISTINGS", screen, responses -> {
             click();
             new MyListingsScreen(plugin, player).show();
         }));

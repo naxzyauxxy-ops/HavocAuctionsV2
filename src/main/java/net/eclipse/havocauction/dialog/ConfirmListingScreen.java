@@ -1,12 +1,10 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.util.ItemNames;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -47,27 +45,26 @@ public class ConfirmListingScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(placeholders());
     }
 
     @Override
-    protected List<DialogBody> body() {
-        List<DialogBody> body = new ArrayList<>();
+    public List<String> bodyLines() {
+        List<String> body = new ArrayList<>();
         ItemStack held = held();
-        if (held != null) body.add(itemBody(held.clone()));
-        body.addAll(Dialogs.body(lines("BODY"), placeholders()));
+        if (held != null) body.addAll(resolve(lines("BODY"), placeholders()));
         return body;
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", placeholders(), () -> new SellScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
-        return List.of(configButton("CONFIRM", placeholders(), (view, audience) ->
+    public List<ScreenModel.Button> buttons() {
+        return List.of(configButton("CONFIRM", placeholders(), responses ->
                 new SellScreen(plugin, player).submit()));
     }
 }

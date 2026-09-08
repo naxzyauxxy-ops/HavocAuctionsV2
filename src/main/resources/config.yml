@@ -74,6 +74,12 @@ AUCTION:
     PAGE-BATCH: 5
 
 DIALOG:
+  # How every menu is drawn, for the whole server:
+  #   DIALOG - Minecraft's dialog windows. Private text fields, works on Bedrock via
+  #            Geyser, needs Paper 1.21.7+ and a 1.21.6+ client.
+  #   MODERN - classic chest menus. Works on any client, but text entry falls back to
+  #            chat, so searches are visible to chat-logging plugins.
+  UI-MODE: "DIALOG"
   COLUMNS: 3
   BUTTON-WIDTH: 200
   ITEM-SIZE: 48
@@ -155,6 +161,7 @@ BEDROCK:
 
 MESSAGES:
   PREFIX: ""
+  PROMPT-CHAT: "&#f40d0dType the {label} in chat, or 'cancel'."
   SEARCHING: "&#f40d0dSearching for &f{query}&#f40d0d..."
   MAP-PREVIEW-START: "&#f40d0dCheck your off hand - the map is yours to look at for {seconds}s."
   MAP-PREVIEW-END: "&#f40d0dMap preview over."

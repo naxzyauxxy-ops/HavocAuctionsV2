@@ -1,12 +1,10 @@
 package net.eclipse.havocauction.dialog;
 
-import io.papermc.paper.registry.data.dialog.ActionButton;
-import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import net.eclipse.havocauction.HavocAuction;
+import net.eclipse.havocauction.ui.ScreenModel;
 import net.eclipse.havocauction.model.Listing;
 import net.eclipse.havocauction.util.NumberUtil;
 import net.eclipse.havocauction.util.Text;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -62,16 +60,16 @@ public class CollectScreen extends Screen {
     }
 
     @Override
-    protected Component title() {
+    public String title() {
         return titleFrom(screen(results()));
     }
 
     @Override
-    protected List<DialogBody> body() {
+    public List<String> bodyLines() {
         List<Listing> results = results();
-        List<DialogBody> body = Dialogs.body(lines("BODY"), screen(results));
+        List<String> body = resolve(lines("BODY"), screen(results));
         if (results.isEmpty()) {
-            body.add(DialogBody.plainMessage(Text.component(string("EMPTY", "&7Nothing waiting."))));
+            body.add(string("EMPTY", "&7Nothing waiting."));
         }
         return body;
     }
@@ -86,19 +84,19 @@ public class CollectScreen extends Screen {
     }
 
     @Override
-    protected ActionButton exitButton() {
+    public ScreenModel.Button exitButton() {
         return backButton("BACK", screen(results()), () -> new MyListingsScreen(plugin, player).show());
     }
 
     @Override
-    protected List<ActionButton> buttons() {
+    public List<ScreenModel.Button> buttons() {
         List<Listing> results = results();
         Map<String, String> screen = screen(results);
         int pages = totalPages(results.size(), perPage());
-        List<ActionButton> buttons = new ArrayList<>();
+        List<ScreenModel.Button> buttons = new ArrayList<>();
 
         for (Listing listing : slice(results, session.getCollectPage(), perPage())) {
-            buttons.add(configButton("LOOT", Placeholders.of(plugin, listing), (view, audience) -> {
+            buttons.add(configButton("LOOT", Placeholders.of(plugin, listing), responses -> {
                 if (plugin.auction().collect(player, listing.getId())) success();
                 else deny();
                 show();
@@ -106,21 +104,21 @@ public class CollectScreen extends Screen {
         }
 
         if (session.getCollectPage() > 0) {
-            buttons.add(configButton("PREVIOUS", screen, (view, audience) -> {
+            buttons.add(configButton("PREVIOUS", screen, responses -> {
                 session.setCollectPage(session.getCollectPage() - 1);
                 click();
                 show();
             }));
         }
         if (session.getCollectPage() < pages - 1) {
-            buttons.add(configButton("NEXT", screen, (view, audience) -> {
+            buttons.add(configButton("NEXT", screen, responses -> {
                 session.setCollectPage(session.getCollectPage() + 1);
                 click();
                 show();
             }));
         }
 
-        buttons.add(configButton("COLLECT-ALL", screen, (view, audience) -> {
+        buttons.add(configButton("COLLECT-ALL", screen, responses -> {
             int collected = plugin.auction().collectAll(player);
             if (collected > 0) {
                 success();
@@ -133,13 +131,13 @@ public class CollectScreen extends Screen {
             show();
         }));
 
-        buttons.add(configButton("DROP-PAGE", screen, (view, audience) -> drop(inPages(results, 1))));
+        buttons.add(configButton("DROP-PAGE", screen, responses -> drop(inPages(results, 1))));
         if (pages > 1) {
-            buttons.add(configButton("DROP-PAGES", screen, (view, audience) ->
+            buttons.add(configButton("DROP-PAGES", screen, responses ->
                     drop(inPages(results, pageBatch()))));
         }
         if (!results.isEmpty()) {
-            buttons.add(configButton("DROP-ALL", screen, (view, audience) -> {
+            buttons.add(configButton("DROP-ALL", screen, responses -> {
                 click();
                 new DropConfirmScreen(plugin, player).show();
             }));

@@ -12,6 +12,11 @@ import net.eclipse.havocauction.manager.SessionManager;
 import net.eclipse.havocauction.model.SortOption;
 import net.eclipse.havocauction.storage.LegacyImporter;
 import net.eclipse.havocauction.storage.SqlStorage;
+import net.eclipse.havocauction.ui.ChestListener;
+import net.eclipse.havocauction.ui.ChestRenderer;
+import net.eclipse.havocauction.ui.DialogRenderer;
+import net.eclipse.havocauction.ui.Prompts;
+import net.eclipse.havocauction.ui.Renderer;
 import net.eclipse.havocauction.util.Category;
 import net.eclipse.havocauction.util.ItemAliases;
 import net.eclipse.havocauction.util.ConfigUpdater;
@@ -48,6 +53,8 @@ public final class HavocAuction extends JavaPlugin {
     private SessionManager sessions;
     private LegacyImporter importer;
     private MapPreview mapPreview;
+    private Renderer renderer;
+    private Prompts prompts;
 
     private final Set<Material> blocked = new HashSet<>();
 
@@ -94,6 +101,11 @@ public final class HavocAuction extends JavaPlugin {
 
         mapPreview = new MapPreview(this);
         getServer().getPluginManager().registerEvents(mapPreview, this);
+
+        prompts = new Prompts(this);
+        getServer().getPluginManager().registerEvents(prompts, this);
+        getServer().getPluginManager().registerEvents(new ChestListener(this), this);
+        applyUiMode();
 
         PluginCommand command = getCommand("auction");
         if (command != null) {
@@ -260,6 +272,7 @@ public final class HavocAuction extends JavaPlugin {
         // Existing listings keep the index built at load; new aliases apply to new
         // listings and after a restart.
         ItemAliases.load(getConfig().getConfigurationSection("AUCTION.SEARCH-ALIASES"));
+        applyUiMode();
     }
 
     public boolean isBlocked(Material material) {
@@ -313,6 +326,30 @@ public final class HavocAuction extends JavaPlugin {
 
     public MapPreview mapPreview() {
         return mapPreview;
+    }
+
+    public Renderer renderer() {
+        return renderer;
+    }
+
+    public Prompts prompts() {
+        return prompts;
+    }
+
+    /**
+     * Picks how screens are drawn. Both modes render the same screen definitions, so a
+     * feature never has to be built twice.
+     */
+    private void applyUiMode() {
+        String mode = getConfig().getString("DIALOG.UI-MODE", "DIALOG");
+        if ("MODERN".equalsIgnoreCase(mode) || "CHEST".equalsIgnoreCase(mode)
+                || "GUI".equalsIgnoreCase(mode)) {
+            renderer = new ChestRenderer(this);
+            getLogger().info("UI mode: MODERN (chest menus).");
+        } else {
+            renderer = new DialogRenderer();
+            getLogger().info("UI mode: DIALOG.");
+        }
     }
 
     // ------------------------------------------------------------------ scheduling
